@@ -6,7 +6,8 @@ import { AgentRegistrationForm } from "@/components/AgentRegistrationForm";
 import { AgentList } from "@/components/AgentList";
 import { BudgetForm } from "@/components/BudgetForm";
 import { PaymentFeed } from "@/components/PaymentFeed";
-import { buildWriteTx } from "@/lib/soroban";
+import { PaymentForm } from "@/components/PaymentForm";
+import { buildWriteTx, queryAgent } from "@/lib/soroban";
 import { getConfig } from "@/lib/config";
 import { TESTNET_NETWORK_PASSPHRASE } from "@/lib/constants";
 
@@ -42,6 +43,35 @@ export default function Home() {
       TESTNET_NETWORK_PASSPHRASE,
     );
     await signAndSend(xdr);
+  };
+
+  const handleCreatePayment = async (
+    fromAgent: string,
+    toAgent: string,
+    amount: string,
+    taskRef: string,
+  ): Promise<string | null> => {
+    if (!address) throw new Error("Wallet not connected");
+    const config = getConfig();
+
+    // Find the token address from the from-agent's budget
+    // (in production, the frontend would let the user pick the token)
+    const paymentId = await new Promise<string | null>((resolve) => {
+      // For now, the payment is created via the contract
+      resolve(null);
+    });
+
+    // Use native token for simplicity
+    const nativeToken = "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4";
+    const xdr = await buildWriteTx(
+      address,
+      config.contracts.payment.id,
+      "create_payment",
+      [fromAgent, toAgent, amount, nativeToken, taskRef],
+      TESTNET_NETWORK_PASSPHRASE,
+    );
+    const hash = await signAndSend(xdr);
+    return hash;
   };
 
   const tabs: { key: Tab; label: string }[] = [
@@ -137,10 +167,16 @@ export default function Home() {
           )}
 
           {tab === "payments" && (
-            <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-              <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
-              <PaymentFeed />
-            </section>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Create Payment</h2>
+                <PaymentForm onCreatePayment={handleCreatePayment} />
+              </section>
+              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
+                <PaymentFeed />
+              </section>
+            </div>
           )}
         </>
       )}
