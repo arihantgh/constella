@@ -1,0 +1,42 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_contracts:
+        description: "Redeploy Soroban contracts to Testnet"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  contracts:
+    if: ${{ github.event.inputs.deploy_contracts == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+
+      - name: Install Soroban CLI
+        run: cargo install soroban-cli --features opt
+
+      - name: Build contracts
+        working-directory: contracts
+        run: cargo build --release --target wasm32v1-none
+
+      - name: Deploy contracts
+        env:
+          SOURCE_ACCOUNT: ${{ vars.SOURCE_ACCOUNT }}
+          RPC_URL: ${{ vars.RPC_URL || 'https://soroban-testnet.stellar.org' }}
+          NETWORK_PASSPHRASE: ${{ vars.NETWORK_PASSPHRASE || 'Test SDF Network ; September 2015' }}
+        run: |
+          echo "${{ secrets.SOURCE_ACCOUNT_SECRET }}" | soroban keys add deployer --secret-stdin
+          ./scripts/deploy.sh \
+            --source-account deployer \
+            --rpc-url "$RPC_URL" \
+            --network-passphrase "$NETWORK_PASSPHRASE"
