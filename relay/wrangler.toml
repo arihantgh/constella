@@ -1,0 +1,25 @@
+name = "constella-relay"
+main = "src/index.ts"
+compatibility_date = "2025-02-01"
+
+# ── Durable Object ────────────────────────────────────────────
+
+[[durable_objects.bindings]]
+name = "EventRoom"
+class_name = "EventRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["EventRoom"]
+
+# ── Cron trigger (every 30 seconds) ───────────────────────────
+
+[triggers]
+crons = ["*/30 * * * * *"]
+
+# ── Environment variables ─────────────────────────────────────
+
+[vars]
+RPC_URL = "https://soroban-testnet.stellar.org"
+CONTRACT_IDS = ""
+POLL_INTERVAL_MS = "30000"

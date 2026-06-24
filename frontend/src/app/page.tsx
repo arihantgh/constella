@@ -5,6 +5,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { AgentRegistrationForm } from "@/components/AgentRegistrationForm";
 import { AgentList } from "@/components/AgentList";
 import { BudgetForm } from "@/components/BudgetForm";
+import { PaymentFeed } from "@/components/PaymentFeed";
 import { buildWriteTx } from "@/lib/soroban";
 import { getConfig } from "@/lib/config";
 import { TESTNET_NETWORK_PASSPHRASE } from "@/lib/constants";
@@ -137,10 +138,8 @@ export default function Home() {
 
           {tab === "payments" && (
             <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-              <h2 className="mb-4 text-lg font-semibold">Payments</h2>
-              <p className="text-sm text-gray-500">
-                Live payment feed and payment creation coming soon.
-              </p>
+              <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
+              <PaymentFeed />
             </section>
           )}
         </>
