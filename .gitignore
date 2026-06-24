@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+target/
+.env
+.env.local
+*.wasm
+.wrangler/
+.next/
+coverage/
