@@ -136,6 +136,86 @@ constella/
 └── README.md
 ```
 
+## Usage
+
+This walkthrough covers the full flow: wallet connect, agent registration, budget config, payment creation, live event feed, and the autonomous simulator. See the [detailed demo script](docs/demo-script.md) for a narrated version with screenshots and negative paths.
+
+### 1. Connect Wallet
+
+1. Open `http://localhost:3000` after starting the frontend.
+2. Click **Connect Wallet**.
+3. Freighter extension prompts you → approve with a Testnet account.
+4. **Verified**: Header shows your truncated public key with a green dot. Three tabs appear: **Agents**, **Budgets**, **Payments**.
+
+> ⚠️ If you see "Wrong network", open Freighter → Settings → Network → switch to **Testnet**.
+
+### 2. Register Agents
+
+Navigate to the **Agents** tab. Fill in the **Register Agent** form:
+
+| Field | Value |
+|-------|-------|
+| Agent ID | A Stellar public key (e.g., from a second Testnet account) |
+| Owner | Your Freighter public key (auto-filled) |
+| Metadata | A label like `alice-demo` or `bob-demo` |
+
+Click **Register Agent** → approve the transaction in Freighter. The agent appears in the **Registered Agents** list with a green **Active** badge. Register at least two agents so you can send payments between them.
+
+### 3. Set Budgets
+
+Navigate to the **Budgets** tab. Enter an agent's public key and set limits:
+
+| Field | Suggested Value |
+|-------|----------------|
+| Agent ID | Public key of the agent from step 2 |
+| Per-Tx Limit | `1000` (max XLM per single payment) |
+| Daily Limit | `10000` (max XLM per rolling 24h period) |
+
+Click **Set Budget** → approve in Freighter. Repeat for each agent.
+
+### 4. Create a Payment
+
+Navigate to the **Payments** tab. Fill in the **Create Payment** form:
+
+| Field | Value |
+|-------|-------|
+| From Agent | Alice's agent ID |
+| To Agent | Bob's agent ID |
+| Amount | `100` (must be ≤ per-tx limit) |
+| Task Reference | A unique ID like `demo-payment-001` |
+
+Click **Create Payment** → approve in Freighter. The form shows the transaction hash on success.
+
+### 5. Live Payment Feed
+
+The **Live Payment Feed** panel (bottom of the Payments tab) displays on-chain events in real time:
+- A **blue** card → Payment Created
+- A **green** card → Payment Executed
+- A **red** card → Payment Rejected (budget exceeded, agent inactive)
+- A **yellow** card → Payment Refunded
+
+The feed updates automatically via WebSocket. If it shows **Disconnected**, the relay isn't running — start it with `npx wrangler dev` in `relay/`.
+
+### 6. Run the Agent Simulator (Autonomous Payments)
+
+Open a separate terminal to demonstrate "no human approval per transaction":
+
+```bash
+cd scripts
+node simulate.mjs --secret <YOUR_DEPLOYER_SECRET> --profile conservative
+```
+
+The simulator creates two agents (Alice, Bob), registers them, sets budgets, and fires periodic payments autonomously. Switch back to the dashboard — each payment appears in the live feed within seconds.
+
+Try the different profiles (see [`scripts/simulate.mjs`](scripts/simulate.mjs)):
+- `conservative` — 100 XLM every 60s
+- `aggressive` — 500 XLM every 15s
+- `over-limit` — deliberately exceeds budget every 3rd payment (demonstrates rejection)
+
+### 7. Verify Budget Enforcement
+
+Try creating a payment that exceeds the per-tx budget (e.g., amount `5000` when the limit is `1000`). The contract rejects it and the live feed shows a red **Payment Rejected** card — proving the guardrail works on-chain, not just in the UI.
+
 ## Deployed Contracts (Testnet)
 
 All three contracts are deployed to Stellar Testnet and can be viewed on [Stellar Expert](https://stellar.expert/explorer/testnet/) or the [Stellar Lab](https://lab.stellar.org/).
