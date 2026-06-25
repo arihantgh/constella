@@ -106,7 +106,7 @@ export function PaymentForm({ onCreatePayment }: Props) {
       <button
         type="submit"
         disabled={submitting || !fromAgent || !toAgent || !amount}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium transition hover:bg-blue-500 disabled:opacity-50"
+        className="min-h-[44px] w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium transition hover:bg-blue-500 disabled:opacity-50"
       >
         {submitting ? "Creating Payment..." : "Create Payment"}
       </button>

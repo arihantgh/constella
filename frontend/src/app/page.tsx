@@ -83,7 +83,7 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">constella</h1>
           <p className="text-sm text-gray-400">Autonomous Agent Payments on Stellar</p>
@@ -97,7 +97,7 @@ export default function Home() {
               </span>
               <button
                 onClick={disconnect}
-                className="rounded-lg border border-gray-700 px-3 py-1.5 text-sm text-gray-300 transition hover:border-gray-500"
+                className="min-h-[44px] rounded-lg border border-gray-700 px-3 py-1.5 text-sm text-gray-300 transition hover:border-gray-500"
               >
                 Disconnect
               </button>
@@ -131,12 +131,12 @@ export default function Home() {
       ) : (
         <>
           {/* Tab bar */}
-          <div className="mb-6 flex gap-1 rounded-lg border border-gray-800 bg-gray-900/50 p-1">
+          <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg border border-gray-800 bg-gray-900/50 p-1">
             {tabs.map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
+                className={`min-h-[44px] flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition ${
                   tab === t.key
                     ? "bg-blue-600 text-white"
                     : "text-gray-400 hover:text-gray-200"
