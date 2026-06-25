@@ -136,6 +136,24 @@ constella/
 └── README.md
 ```
 
+## Deployed Contracts (Testnet)
+
+All three contracts are deployed to Stellar Testnet and can be viewed on [Stellar Expert](https://stellar.expert/explorer/testnet/) or the [Stellar Lab](https://lab.stellar.org/).
+
+| Contract | Address | Stellar Expert | Deploy TX |
+|---|---|---|---|
+| **Agent Registry** | `CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR` | [View](https://stellar.expert/explorer/testnet/contract/CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR) | [`430d8f60...`](https://stellar.expert/explorer/testnet/tx/430d8f60990757cc961080b9268dbcc6b0d4ad0b272eb6c81bb1a29ac27a9df2) |
+| **Budget Policy** | `CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA` | [View](https://stellar.expert/explorer/testnet/contract/CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA) | [`af35d9c5...`](https://stellar.expert/explorer/testnet/tx/af35d9c516e932c1d4746adefbc935ae53594a7898fa8e06e3092d9aa88cc970) |
+| **Payment** | `CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ` | [View](https://stellar.expert/explorer/testnet/contract/CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ) | [`4e706ffe...`](https://stellar.expert/explorer/testnet/tx/4e706ffe5e2d9f062531994839088694f02c8b028727270e900dca5f47c522f9) |
+
+These addresses are also written to `scripts/contracts.json`. To use them locally, copy them into `frontend/.env.local`:
+
+```
+NEXT_PUBLIC_AGENT_REGISTRY_ID=CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR
+NEXT_PUBLIC_BUDGET_POLICY_ID=CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA
+NEXT_PUBLIC_PAYMENT_ID=CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ
+```
+
 ## Contract Details
 
 ### Agent Registry
