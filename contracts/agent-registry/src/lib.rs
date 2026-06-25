@@ -1,6 +1,8 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, Symbol};
+use soroban_sdk::{
+    contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, Symbol,
+};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -19,12 +21,7 @@ pub struct AgentRegistry;
 
 #[contractimpl]
 impl AgentRegistry {
-    pub fn register_agent(
-        env: Env,
-        agent_id: Address,
-        owner: Address,
-        metadata: Bytes,
-    ) -> bool {
+    pub fn register_agent(env: Env, agent_id: Address, owner: Address, metadata: Bytes) -> bool {
         let key = (AGENT_KEY, agent_id.clone());
         if env.storage().instance().has(&key) {
             panic!("agent already registered");
@@ -39,10 +36,8 @@ impl AgentRegistry {
         };
         env.storage().instance().set(&key, &info);
 
-        env.events().publish(
-            (symbol_short!("agent_reg"), agent_id),
-            (owner, metadata),
-        );
+        env.events()
+            .publish((symbol_short!("agent_reg"), agent_id), (owner, metadata));
         true
     }
 

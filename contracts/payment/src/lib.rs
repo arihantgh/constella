@@ -1,6 +1,8 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, MuxedAddress, Symbol};
+use soroban_sdk::{
+    contract, contractimpl, contracttype, symbol_short, Address, Bytes, Env, MuxedAddress, Symbol,
+};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -184,15 +186,11 @@ impl Payment {
 }
 
 mod agent_registry {
-    soroban_sdk::contractimport!(
-        file = "../target/wasm32v1-none/release/agent_registry.wasm"
-    );
+    soroban_sdk::contractimport!(file = "../target/wasm32v1-none/release/agent_registry.wasm");
 }
 
 mod budget_policy {
-    soroban_sdk::contractimport!(
-        file = "../target/wasm32v1-none/release/budget_policy.wasm"
-    );
+    soroban_sdk::contractimport!(file = "../target/wasm32v1-none/release/budget_policy.wasm");
 }
 
 mod test;

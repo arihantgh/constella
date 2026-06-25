@@ -41,7 +41,11 @@ fn create_test_env() -> (
 
     let token_admin_client = token::StellarAssetClient::new(&env, &token_id);
 
-    registry_client.register_agent(&from_agent, &from_owner, &Bytes::from_slice(&env, b"agent-a"));
+    registry_client.register_agent(
+        &from_agent,
+        &from_owner,
+        &Bytes::from_slice(&env, b"agent-a"),
+    );
     registry_client.register_agent(&to_agent, &to_owner, &Bytes::from_slice(&env, b"agent-b"));
     budget_client.set_budget(&from_agent, &from_owner, &1000, &5000);
     token_admin_client.mint(&from_agent, &10000);
