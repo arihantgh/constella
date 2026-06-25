@@ -70,35 +70,119 @@ Cloudflare Worker + Durable Object that polls Soroban RPC for contract events (c
 | npm | 10+ | Package management |
 | Freighter | browser extension | Sign transactions (frontend) |
 
-## Quick Start
+## Quick Start — From Zero to Running
 
-See the full guide at [`docs/running-and-deploying.md`](docs/running-and-deploying.md) for detailed steps covering local dev, Testnet deployment, Cloudflare Workers, and production.
+These steps take you from a fresh clone to seeing autonomous agent payments in your browser. Each step lists exactly what to do and how to verify it worked.
+
+### 1. Install Dependencies
 
 ```bash
-# ── 1. Build & test contracts ─────────────────────────
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Add WASM target for Soroban smart contracts
+rustup target add wasm32v1-none
+
+# Install Soroban CLI
+cargo install soroban-cli --features opt
+
+# Install Node.js 20+ (via nvm recommended)
+# curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+# nvm install 22
+```
+
+**Verify**: `rustc --version`, `soroban --version`, `node --version`, `npm --version` all succeed.
+
+### 2. Install Freighter (Browser Wallet)
+
+Install the [Freighter browser extension](https://www.freighter.app/) for Chrome or Firefox. Open it after installing:
+
+- Click the Freighter icon → **Create a new wallet** (or import existing)
+- Go to **Settings** → **Network** → select **Testnet**
+- Fund your account: copy your public key, go to the [Stellar Lab](https://lab.stellar.org/account/create), paste it, and click **Get test network funds**
+
+**Verify**: You see a 10,000 XLM balance in Freighter.
+
+### 3. Clone and Build
+
+```bash
+# Clone the repo
+git clone git@github.com:arihantgh/constella.git
+cd constella
+
+# Build all three smart contracts
 cd contracts
 cargo build --release --target wasm32v1-none
-cargo test                                    # 21 tests
 
-# ── 2. Install & run frontend ─────────────────────────
+# Run contract tests (21 tests across 3 contracts)
+cargo test
+```
+
+**Verify**: `Finished release` with no errors, `cargo test` shows 7/9/7 tests passing (21 total).
+
+### 4. Install Frontend
+
+```bash
 cd ../frontend
 npm install
-cp .env.example .env.local                    # edit with contract IDs
-npm run dev                                   # http://localhost:3000
-
-# ── 3. Deploy to Testnet ──────────────────────────────
-cd ../scripts
-./deploy.sh --source-account <YOUR_PUBLIC_KEY> # writes contracts.json
-
-# ── 4. Run agent simulator ────────────────────────────
-node simulate.mjs --secret <SECRET> --profile aggressive
-
-# ── 5. Set up event relay ─────────────────────────────
-cd ../relay
-npm install
-cp .env.example .dev.vars                      # edit CONTRACT_IDS
-npx wrangler dev                               # http://localhost:8787
 ```
+
+Copy the environment template and open it in your editor:
+
+```bash
+cp .env.example .env.local
+```
+
+Open `.env.local` and set these values (contract IDs are already deployed — see the [Deployed Contracts](#deployed-contracts-testnet) section):
+
+```
+NEXT_PUBLIC_RPC_URL=https://soroban-testnet.stellar.org
+NEXT_PUBLIC_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
+NEXT_PUBLIC_RELAY_URL=ws://localhost:8787
+NEXT_PUBLIC_AGENT_REGISTRY_ID=CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR
+NEXT_PUBLIC_BUDGET_POLICY_ID=CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA
+NEXT_PUBLIC_PAYMENT_ID=CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ
+```
+
+### 5. Start the Frontend
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000` in your browser. You should see the constella dashboard with a **Connect Wallet** button.
+
+**Verify**: Page loads without errors. Clicking **Connect Wallet** opens a Freighter popup.
+
+### 6. Start the Event Relay (for live feed)
+
+Open a second terminal:
+
+```bash
+cd relay
+npm install
+cp .env.example .dev.vars
+```
+
+Edit `.dev.vars` and set:
+
+```
+RPC_URL=https://soroban-testnet.stellar.org
+CONTRACT_IDS=CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR,CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA,CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ
+POLL_INTERVAL_MS=30000
+```
+
+```bash
+npx wrangler dev
+```
+
+**Verify**: `http://localhost:8787/health` returns `{"status":"healthy",...}`.
+
+### 7. Use the Application
+
+Now follow the steps the [Usage](#usage) section below to connect your wallet, register agents, set budgets, and create payments. Open the agent simulator in a third terminal for autonomous payments.
+
+> See [`docs/running-and-deploying.md`](docs/running-and-deploying.md) for deploying contracts yourself, deploying the relay to Cloudflare Workers, and the frontend to Vercel.
 
 ## Project Structure
 
