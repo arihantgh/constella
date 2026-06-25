@@ -8,3 +8,6 @@ target/
 .wrangler/
 .next/
 coverage/
+
+prd.md
+.commandcode
