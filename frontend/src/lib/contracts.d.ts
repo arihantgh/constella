@@ -1,13 +1,8 @@
-/**
- * Typed Soroban contract bindings for constella.
- *
- * These mirror the Rust contract interfaces (see docs/architecture.md)
- * and should be kept in sync with contracts/*/src/lib.rs.
- *
- * Generated from contract source — update when contract interfaces change.
- */
+// Typed Soroban contract bindings for constella.
+// These mirror the Rust contract interfaces (see docs/architecture.md)
+// and should be kept in sync with contracts/*/src/lib.rs.
 
-// ── Agent Registry ───────────────────────────────────────────
+// Agent Registry
 
 export interface AgentInfo {
   agent_id: string;
@@ -30,7 +25,7 @@ export type AgentRegistryArgs = {
   get_agent: [agentId: string];
 };
 
-// ── Budget Policy ────────────────────────────────────────────
+// Budget Policy
 
 export interface Budget {
   agent_id: string;
@@ -56,7 +51,7 @@ export type BudgetPolicyArgs = {
   get_budget: [agentId: string];
 };
 
-// ── Payment / Escrow ─────────────────────────────────────────
+// Payment / Escrow
 
 export type PaymentStatus =
   | "Pending"
@@ -99,7 +94,7 @@ export type PaymentArgs = {
   get_payment: [paymentId: number];
 };
 
-// ── Event types (matching Soroban event topics) ──────────────
+// Event types (matching Soroban event topics)
 
 export type ContractEvent =
   | { topic: "agent_reg"; data: [owner: string, metadata: string] }
