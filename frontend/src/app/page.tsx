@@ -7,7 +7,8 @@ import { AgentList } from "@/components/AgentList";
 import { BudgetForm } from "@/components/BudgetForm";
 import { PaymentFeed } from "@/components/PaymentFeed";
 import { PaymentForm } from "@/components/PaymentForm";
-import { buildWriteTx, queryAgent } from "@/lib/soroban";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { buildWriteTx } from "@/lib/soroban";
 import { getConfig } from "@/lib/config";
 import { TESTNET_NETWORK_PASSPHRASE } from "@/lib/constants";
 
@@ -147,36 +148,42 @@ export default function Home() {
           </div>
 
           {tab === "agents" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                <h2 className="mb-4 text-lg font-semibold">Register Agent</h2>
-                <AgentRegistrationForm onRegister={handleRegister} />
-              </section>
-              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                <h2 className="mb-4 text-lg font-semibold">Registered Agents</h2>
-                <AgentList knownAgents={knownAgents} />
-              </section>
-            </div>
+            <ErrorBoundary>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                  <h2 className="mb-4 text-lg font-semibold">Register Agent</h2>
+                  <AgentRegistrationForm onRegister={handleRegister} />
+                </section>
+                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                  <h2 className="mb-4 text-lg font-semibold">Registered Agents</h2>
+                  <AgentList knownAgents={knownAgents} />
+                </section>
+              </div>
+            </ErrorBoundary>
           )}
 
           {tab === "budgets" && (
-            <section className="mx-auto max-w-lg rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-              <h2 className="mb-4 text-lg font-semibold">Set Budget</h2>
-              <BudgetForm onSetBudget={handleSetBudget} />
-            </section>
+            <ErrorBoundary>
+              <section className="mx-auto max-w-lg rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Set Budget</h2>
+                <BudgetForm onSetBudget={handleSetBudget} />
+              </section>
+            </ErrorBoundary>
           )}
 
           {tab === "payments" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                <h2 className="mb-4 text-lg font-semibold">Create Payment</h2>
-                <PaymentForm onCreatePayment={handleCreatePayment} />
-              </section>
-              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
-                <PaymentFeed />
-              </section>
-            </div>
+            <ErrorBoundary>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                  <h2 className="mb-4 text-lg font-semibold">Create Payment</h2>
+                  <PaymentForm onCreatePayment={handleCreatePayment} />
+                </section>
+                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                  <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
+                  <PaymentFeed />
+                </section>
+              </div>
+            </ErrorBoundary>
           )}
         </>
       )}

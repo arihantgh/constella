@@ -18,7 +18,11 @@ export function AgentList({ knownAgents, onRefresh }: Props) {
     const results: Record<string, AgentInfo | null> = {};
     await Promise.all(
       knownAgents.map(async (id) => {
-        results[id] = await queryAgent(id);
+        try {
+          results[id] = await queryAgent(id);
+        } catch {
+          results[id] = null;
+        }
       }),
     );
     setAgents(results);
