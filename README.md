@@ -72,59 +72,32 @@ Cloudflare Worker + Durable Object that polls Soroban RPC for contract events (c
 
 ## Quick Start
 
-### 1. Build and test contracts
+See the full guide at [`docs/running-and-deploying.md`](docs/running-and-deploying.md) for detailed steps covering local dev, Testnet deployment, Cloudflare Workers, and production.
 
 ```bash
+# ── 1. Build & test contracts ─────────────────────────
 cd contracts
-
-# Install wasm target
-rustup target add wasm32v1-none
-
-# Build all contracts
 cargo build --release --target wasm32v1-none
+cargo test                                    # 21 tests
 
-# Run all tests (21 total)
-cargo test
-```
-
-### 2. Set up the frontend
-
-```bash
-cd frontend
+# ── 2. Install & run frontend ─────────────────────────
+cd ../frontend
 npm install
-npm run dev
-# → http://localhost:3000
-```
+cp .env.example .env.local                    # edit with contract IDs
+npm run dev                                   # http://localhost:3000
 
-### 3. Deploy to Testnet
+# ── 3. Deploy to Testnet ──────────────────────────────
+cd ../scripts
+./deploy.sh --source-account <YOUR_PUBLIC_KEY> # writes contracts.json
 
-```bash
-# Build WASM artifacts first
-cd contracts && cargo build --release --target wasm32v1-none
+# ── 4. Run agent simulator ────────────────────────────
+node simulate.mjs --secret <SECRET> --profile aggressive
 
-# Deploy (requires a funded Testnet account)
-cd ..
-./scripts/deploy.sh --source-account <YOUR_PUBLIC_KEY>
-```
-
-The deploy script writes contract addresses to `scripts/contracts.json`.
-
-### 4. Run the agent simulator
-
-```bash
-# Copy contracts.json from deployment step or provide addresses manually
-node scripts/simulate.mjs \
-  --secret <DEPLOYER_KEYPAIR_SECRET> \
-  --interval 30
-```
-
-### 5. Set up the event relay
-
-```bash
-cd relay
+# ── 5. Set up event relay ─────────────────────────────
+cd ../relay
 npm install
-# Update wrangler.toml with your contract IDs
-npx wrangler dev
+cp .env.example .dev.vars                      # edit CONTRACT_IDS
+npx wrangler dev                               # http://localhost:8787
 ```
 
 ## Project Structure
@@ -132,22 +105,29 @@ npx wrangler dev
 ```
 constella/
 ├── .github/workflows/
-│   ├── contract-tests.yml    # Runs tests on push
-│   └── deploy.yml            # Manual contract redeploy
+│   ├── ci.yml                # Contracts + frontend + e2e
+│   ├── deploy.yml            # Manual contract redeploy
+│   └── contract-tests.yml    # Legacy (superseded by ci.yml)
 ├── contracts/
 │   ├── agent-registry/       # Agent identity contract
 │   ├── budget-policy/        # Budget enforcement contract
 │   └── payment/              # Payment escrow contract
+├── docs/
+│   ├── architecture.md       # Contract interface reference
+│   ├── demo-script.md        # Narrated walkthrough
+│   └── running-and-deploying.md  # <-- Full setup guide
 ├── frontend/                 # Next.js dashboard
+│   ├── vercel.json           # Vercel deployment config
 │   └── src/
 │       ├── app/              # Pages + layout
 │       ├── components/       # AgentForm, BudgetForm, PaymentFeed, etc.
 │       ├── hooks/            # useWallet, useEventFeed
 │       └── lib/              # soroban.ts, config, types, constants
 ├── relay/                    # Cloudflare Workers event relay
+│   ├── wrangler.toml         # Worker + DO + cron config
 │   └── src/
 │       ├── index.ts          # Worker (cron poller + WS handler)
-│       ├── eventRoom.ts      # Durable Object (WS fan-out)
+│       ├── logger.ts         # Structured JSON logger
 │       └── types.ts
 ├── scripts/
 │   ├── deploy.sh             # Testnet deployment
