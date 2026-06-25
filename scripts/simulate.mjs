@@ -4,13 +4,19 @@
  * constella — Agent Simulator
  *
  * Creates two agents (Alice, Bob), funds them, sets budgets,
- * and fires periodic payments between them on Stellar Testnet.
+ * and fires periodic payments on Stellar Testnet.
+ *
+ * FR6.2 — Configurable behavior profiles:
+ *   - conservative:  small, infrequent payments (default)
+ *   - aggressive:    larger, rapid-fire payments
+ *   - over-limit:    deliberately exceeds budget for rejection demo
  *
  * Usage:
- *   node scripts/simulate.mjs \
- *     --secret <KEYPAIR_SECRET> \
- *     [--rpc https://soroban-testnet.stellar.org] \
- *     [--interval 30]
+ *   node scripts/simulate.mjs --secret <secret> [--profile conservative]
+ *   --secret     Keypair secret for the admin/source account (required)
+ *   --rpc        Soroban RPC URL (default: soroban-testnet.stellar.org)
+ *   --interval   Payment interval in seconds (default: per profile)
+ *   --profile    Behavior profile (conservative | aggressive | over-limit)
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -28,17 +34,51 @@ import { rpc } from "@stellar/stellar-sdk";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT = join(__dirname, "..");
 
+// ── Profiles ──────────────────────────────────────────────────
+
+const PROFILES = {
+  conservative: {
+    label: "Conservative",
+    interval: 60,
+    perTxAmount: "100",
+    perTxLimit: "1000",
+    dailyLimit: "10000",
+    occasionallyOverLimit: false,
+    description: "Small, infrequent payments within budget",
+  },
+  aggressive: {
+    label: "Aggressive",
+    interval: 15,
+    perTxAmount: "500",
+    perTxLimit: "1000",
+    dailyLimit: "50000",
+    occasionallyOverLimit: false,
+    description: "Larger, rapid-fire payments",
+  },
+  "over-limit": {
+    label: "Over-Limit Demo",
+    interval: 10,
+    perTxAmount: "2000",
+    perTxLimit: "1000",
+    dailyLimit: "5000",
+    occasionallyOverLimit: true,
+    description: "Deliberately exceeds budget to demo rejection path",
+  },
+};
+
 // ── CLI args ──────────────────────────────────────────────────
 
 const args = Object.fromEntries(
-  process.argv.slice(2).map((a, i, arr) =>
-    a.startsWith("--") ? [a.slice(2), arr[i + 1] ?? ""] : []
-  ).filter(([k]) => k)
+  process.argv.slice(2)
+    .map((a, i, arr) => (a.startsWith("--") ? [a.slice(2), arr[i + 1] ?? ""] : []))
+    .filter(([k]) => k),
 );
 
 const SECRET = args.secret || args.s || "";
-const RPC_URL = args.rpc || "https://soroban-testnet.stellar.org";
-const INTERVAL = parseInt(args.interval || args.i || "30", 10);
+const RPC_URL = args.rpc || args.r || "https://soroban-testnet.stellar.org";
+const PROFILE_NAME = args.profile || args.p || "conservative";
+const PROFILE = PROFILES[PROFILE_NAME] || PROFILES.conservative;
+const INTERVAL = parseInt(args.interval || args.i || "0", 10) || PROFILE.interval;
 const NETWORK = "Test SDF Network ; September 2015";
 
 if (!SECRET) {
@@ -55,18 +95,11 @@ function loadContracts() {
   ];
   for (const p of paths) {
     if (existsSync(p)) {
-      const raw = readFileSync(p, "utf-8");
-      return JSON.parse(raw).contracts;
+      return JSON.parse(readFileSync(p, "utf-8")).contracts;
     }
   }
-  console.error(
-    "Warning: contracts.json not found. Using placeholder addresses."
-  );
-  return {
-    agent_registry: { id: "" },
-    budget_policy: { id: "" },
-    payment: { id: "" },
-  };
+  console.error("Warning: contracts.json not found. Using placeholder addresses.");
+  return { agent_registry: { id: "" }, budget_policy: { id: "" }, payment: { id: "" } };
 }
 
 const contracts = loadContracts();
@@ -78,13 +111,19 @@ const source = Keypair.fromSecret(SECRET);
 const alice = Keypair.random();
 const bob = Keypair.random();
 
+console.log("");
 console.log("┌─ constella Agent Simulator ─────────────────────────┐");
-console.log(`│ Source:  ${source.publicKey().slice(0, 16)}...`);
-console.log(`│ Alice:   ${alice.publicKey().slice(0, 16)}...`);
-console.log(`│ Bob:     ${bob.publicKey().slice(0, 16)}...`);
-console.log(`│ RPC:     ${RPC_URL}`);
-console.log(`│ Interval: ${INTERVAL}s`);
+console.log(`│ Profile:  ${PROFILE.label.padEnd(42)}│`);
+console.log(`│ ${PROFILE.description.padEnd(52)}│`);
+console.log(`│ Source:   ${source.publicKey().slice(0, 16)}...${"      │"}`);
+console.log(`│ Alice:    ${alice.publicKey().slice(0, 16)}...${"      │"}`);
+console.log(`│ Bob:      ${bob.publicKey().slice(0, 16)}...${"      │"}`);
+console.log(`│ RPC:      ${RPC_URL}`);
+console.log(`│ Interval: ${INTERVAL}s${" ".repeat(28)}│`);
+console.log(`│ Amount:   ${PROFILE.perTxAmount.padEnd(24)}│`);
+console.log(`│ Budget:   tx=${PROFILE.perTxLimit} daily=${PROFILE.dailyLimit}${" │"}`);
 console.log("└──────────────────────────────────────────────────────┘");
+console.log("");
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -110,7 +149,7 @@ async function submitOperation(sourceKp, contractId, method, scValArgs) {
 
   const tx = new TransactionBuilder(
     { accountId: () => sourcePub, sequenceNumber: () => seq },
-    { fee: "100", networkPassphrase: NETWORK }
+    { fee: "100", networkPassphrase: NETWORK },
   )
     .addOperation(op)
     .setTimeout(30)
@@ -129,116 +168,107 @@ async function submitOperation(sourceKp, contractId, method, scValArgs) {
       const poll = await server.getTransaction(hash);
       if (poll.status === "SUCCESS") {
         log("✅", `tx ${hash.slice(0, 12)}... confirmed`);
-        return poll;
+        return "SUCCESS";
       }
       if (poll.status === "FAILED") {
-        log("❌", `tx ${hash.slice(0, 12)}... failed`);
-        return poll;
+        log("❌", `tx ${hash.slice(0, 12)}... failed (${poll.resultXdr?.slice(0, 40) || "unknown"})`);
+        return "FAILED";
       }
       attempts++;
     }
     log("⚠️", `tx ${hash.slice(0, 12)}... still pending after 60s`);
-    return sendResult;
+    return "TIMEOUT";
   }
   log("❌", `send failed: ${JSON.stringify(sendResult)}`);
-  return sendResult;
+  return "ERROR";
 }
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function toBytes(hex) {
+  return nativeToScVal(hex, { type: "bytes" });
+}
+
+function toAddress(pubKey) {
+  return nativeToScVal(pubKey, { type: "address" });
+}
+
+function toI128(val) {
+  return nativeToScVal(String(val), { type: "i128" });
+}
+
 // ── Main simulation loop ──────────────────────────────────────
 
 async function run() {
+  const { perTxAmount, perTxLimit, dailyLimit, occasionallyOverLimit } = PROFILE;
+
   // Step 1: Register Alice
-  log("🤖", `Registering Alice...`);
-  await submitOperation(
-    source,
-    contracts.agent_registry.id,
-    "register_agent",
-    [
-      nativeToScVal(alice.publicKey(), { type: "address" }),
-      nativeToScVal(source.publicKey(), { type: "address" }),
-      nativeToScVal(
-        Buffer.from("alice-sim-agent").toString("hex"),
-        { type: "bytes" }
-      ),
-    ]
-  );
+  log("🤖", "Registering Alice...");
+  await submitOperation(source, contracts.agent_registry.id, "register_agent", [
+    toAddress(alice.publicKey()),
+    toAddress(source.publicKey()),
+    toBytes("alice-sim-agent"),
+  ]);
 
   // Step 2: Register Bob
-  log("🤖", `Registering Bob...`);
-  await submitOperation(
-    source,
-    contracts.agent_registry.id,
-    "register_agent",
-    [
-      nativeToScVal(bob.publicKey(), { type: "address" }),
-      nativeToScVal(source.publicKey(), { type: "address" }),
-      nativeToScVal(
-        Buffer.from("bob-sim-agent").toString("hex"),
-        { type: "bytes" }
-      ),
-    ]
-  );
+  log("🤖", "Registering Bob...");
+  await submitOperation(source, contracts.agent_registry.id, "register_agent", [
+    toAddress(bob.publicKey()),
+    toAddress(source.publicKey()),
+    toBytes("bob-sim-agent"),
+  ]);
 
-  // Step 3: Set Alice's budget
-  log("💰", `Setting Alice's budget (per-tx: 1000, daily: 10000)...`);
-  await submitOperation(
-    source,
-    contracts.budget_policy.id,
-    "set_budget",
-    [
-      nativeToScVal(alice.publicKey(), { type: "address" }),
-      nativeToScVal(source.publicKey(), { type: "address" }),
-      nativeToScVal("1000", { type: "i128" }),
-      nativeToScVal("10000", { type: "i128" }),
-    ]
-  );
+  // Step 3: Set budgets
+  log("💰", `Setting Alice's budget (tx: ${perTxLimit}, daily: ${dailyLimit})...`);
+  await submitOperation(source, contracts.budget_policy.id, "set_budget", [
+    toAddress(alice.publicKey()),
+    toAddress(source.publicKey()),
+    toI128(perTxLimit),
+    toI128(dailyLimit),
+  ]);
 
-  // Step 4: Set Bob's budget
-  log("💰", `Setting Bob's budget (per-tx: 1000, daily: 10000)...`);
-  await submitOperation(
-    source,
-    contracts.budget_policy.id,
-    "set_budget",
-    [
-      nativeToScVal(bob.publicKey(), { type: "address" }),
-      nativeToScVal(source.publicKey(), { type: "address" }),
-      nativeToScVal("1000", { type: "i128" }),
-      nativeToScVal("10000", { type: "i128" }),
-    ]
-  );
+  log("💰", `Setting Bob's budget (tx: ${perTxLimit}, daily: ${dailyLimit})...`);
+  await submitOperation(source, contracts.budget_policy.id, "set_budget", [
+    toAddress(bob.publicKey()),
+    toAddress(source.publicKey()),
+    toI128(perTxLimit),
+    toI128(dailyLimit),
+  ]);
 
-  log("✅", "Initialization complete. Starting payment loop...");
+  log("✅", "Initialization complete. Starting payment loop...\n");
   let paymentCount = 0;
 
-  // Step 5: Periodic payment loop
+  // Step 4: Periodic payment loop
   while (true) {
     paymentCount++;
-    log("💸", `Payment #${paymentCount}: Alice → Bob (amount: 100)`);
+    const amount =
+      occasionallyOverLimit && paymentCount % 3 === 0
+        ? String(Number(perTxLimit) * 2) // 2x the per-tx limit = rejection
+        : perTxAmount;
 
-    await submitOperation(
+    const label = Number(amount) > Number(perTxLimit) ? "(over-limit!)" : "";
+    log("💸", `Payment #${paymentCount}: Alice → Bob (${amount} XLM) ${label}`);
+
+    const result = await submitOperation(
       source,
       contracts.payment.id,
       "create_payment",
       [
-        nativeToScVal(alice.publicKey(), { type: "address" }),
-        nativeToScVal(bob.publicKey(), { type: "address" }),
-        nativeToScVal("100", { type: "i128" }),
-        nativeToScVal(
-          "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-          { type: "address" }
-        ),
-        nativeToScVal(
-          Buffer.from(`sim-payment-${paymentCount}`).toString("hex"),
-          { type: "bytes" }
-        ),
-      ]
+        toAddress(alice.publicKey()),
+        toAddress(bob.publicKey()),
+        toI128(amount),
+        toAddress("CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"),
+        toBytes(`sim-payment-${paymentCount}`),
+      ],
     );
 
-    log("⏰", `Next payment in ${INTERVAL}s...`);
+    if (result === "FAILED" && Number(amount) > Number(perTxLimit)) {
+      log("🛡️", "Budget guardrail triggered! Over-limit payment rejected as expected.");
+    }
+
+    log("⏰", `Next payment in ${INTERVAL}s...\n`);
     await sleep(INTERVAL * 1000);
   }
 }
