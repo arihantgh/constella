@@ -1,25 +1,18 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
+import {
+  requestAccess,
+  getAddress,
+  getNetwork,
+  isConnected,
+  signTransaction,
+} from "@stellar/freighter-api";
 import type { WalletState } from "@/lib/types";
 import {
   TESTNET_NETWORK,
   TESTNET_NETWORK_PASSPHRASE,
 } from "@/lib/constants";
-
-declare global {
-  interface Window {
-    freighter?: {
-      isConnected: () => Promise<{ isConnected: boolean }>;
-      getPublicKey: () => Promise<string>;
-      getNetwork: () => Promise<string>;
-      signTransaction: (
-        xdr: string,
-        opts?: { networkPassphrase?: string }
-      ) => Promise<string>;
-    };
-  }
-}
 
 export function useWallet() {
   const [state, setState] = useState<WalletState>({
@@ -35,27 +28,36 @@ export function useWallet() {
     setError(null);
 
     try {
-      if (!window.freighter) {
+      // Check if Freighter extension is installed
+      const { isConnected: freighterConnected } = await isConnected();
+      if (!freighterConnected) {
         throw new Error(
           "Freighter not detected. Please install the Freighter browser extension."
         );
       }
 
-      const { isConnected } = await window.freighter.isConnected();
-      if (!isConnected) {
-        // Freighter will prompt the user to connect
+      // Request access — prompts the Freighter popup
+      const { address, error: accessError } = await requestAccess();
+      if (accessError || !address) {
+        throw new Error(accessError || "Failed to connect wallet");
       }
 
-      const address = await window.freighter.getPublicKey();
-      const network = await window.freighter.getNetwork();
+      const networkDetails = (await getNetwork()) as {
+        network: string;
+        networkPassphrase: string;
+      };
 
-      if (network !== TESTNET_NETWORK) {
+      if (networkDetails.network !== TESTNET_NETWORK) {
         throw new Error(
-          `Wrong network: ${network}. Please switch to Testnet in Freighter.`
+          `Wrong network: ${networkDetails.network}. Please switch to Testnet in Freighter.`
         );
       }
 
-      setState({ address, isConnected: true, network });
+      setState({
+        address,
+        isConnected: true,
+        network: networkDetails.network,
+      });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to connect wallet";
@@ -75,7 +77,7 @@ export function useWallet() {
     async (xdr: string): Promise<string> => {
       if (!state.address) throw new Error("Wallet not connected");
 
-      const signedXdr = await window.freighter!.signTransaction(xdr, {
+      const signedXdr = await signTransaction(xdr, {
         networkPassphrase: TESTNET_NETWORK_PASSPHRASE,
       });
 
@@ -104,19 +106,26 @@ export function useWallet() {
   // Re-check connection on mount
   useEffect(() => {
     async function check() {
-      if (window.freighter) {
-        try {
-          const { isConnected } = await window.freighter.isConnected();
-          if (isConnected) {
-            const address = await window.freighter.getPublicKey();
-            const network = await window.freighter.getNetwork();
-            if (network === TESTNET_NETWORK) {
-              setState({ address, isConnected: true, network });
+      try {
+        const { isConnected: freighterConnected } = await isConnected();
+        if (freighterConnected) {
+          const { address } = await getAddress();
+          if (address) {
+            const networkDetails = (await getNetwork()) as {
+              network: string;
+              networkPassphrase: string;
+            };
+            if (networkDetails.network === TESTNET_NETWORK) {
+              setState({
+                address,
+                isConnected: true,
+                network: networkDetails.network,
+              });
             }
           }
-        } catch {
-          // Freighter not available or user not connected
         }
+      } catch {
+        // Freighter not available or user not connected
       }
     }
     check();

@@ -1,19 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useWallet } from "@/hooks/useWallet";
+import * as freighterApi from "@stellar/freighter-api";
 
-function createMockFreighter() {
-  return {
-    isConnected: vi.fn().mockResolvedValue({ isConnected: true }),
-    getPublicKey: vi.fn().mockResolvedValue("GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"),
-    getNetwork: vi.fn().mockResolvedValue("TESTNET"),
-    signTransaction: vi.fn().mockResolvedValue("signed-xdr"),
-  };
-}
+vi.mock("@stellar/freighter-api", () => ({
+  isConnected: vi.fn(),
+  getAddress: vi.fn(),
+  getNetwork: vi.fn(),
+  requestAccess: vi.fn(),
+  signTransaction: vi.fn(),
+}));
+
+const mockAddress = "GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
 describe("useWallet", () => {
   beforeEach(() => {
-    window.freighter = createMockFreighter() as any;
+    vi.clearAllMocks();
+    vi.mocked(freighterApi.isConnected).mockResolvedValue({
+      isConnected: true,
+    });
+    vi.mocked(freighterApi.requestAccess).mockResolvedValue({
+      address: mockAddress,
+    });
+    vi.mocked(freighterApi.getAddress).mockResolvedValue({
+      address: mockAddress,
+    });
+    vi.mocked(freighterApi.getNetwork).mockResolvedValue({
+      network: "TESTNET",
+      networkPassphrase: "Test SDF Network ; September 2015",
+    });
   });
 
   it("starts in disconnected state", () => {
@@ -30,13 +45,16 @@ describe("useWallet", () => {
     });
 
     expect(result.current.isConnected).toBe(true);
-    expect(result.current.address).toBe("GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890");
+    expect(result.current.address).toBe(mockAddress);
     expect(result.current.network).toBe("TESTNET");
     expect(result.current.error).toBeNull();
   });
 
   it("rejects wrong network", async () => {
-    window.freighter!.getNetwork = vi.fn().mockResolvedValue("PUBLIC");
+    vi.mocked(freighterApi.getNetwork).mockResolvedValue({
+      network: "PUBLIC",
+      networkPassphrase: "Public Global Stellar Network ; September 2015",
+    });
     const { result } = renderHook(() => useWallet());
 
     await act(async () => {
@@ -65,7 +83,9 @@ describe("useWallet", () => {
   });
 
   it("handles missing Freighter extension", async () => {
-    window.freighter = undefined as any;
+    vi.mocked(freighterApi.isConnected).mockResolvedValue({
+      isConnected: false,
+    });
     const { result } = renderHook(() => useWallet());
 
     await act(async () => {
