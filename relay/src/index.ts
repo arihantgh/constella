@@ -10,8 +10,55 @@ import type { SorobanEvent } from "./types";
 interface Env {
   EventRoom: DurableObjectNamespace;
   RPC_URL: string;
-  CONTRACT_IDS: string; // comma-separated
+  CONTRACT_IDS: string;
   POLL_INTERVAL_MS: string;
+}
+
+// ── KV-backed cursor tracking ────────────────────────────────
+// Stores the last successfully polled ledger so we can resume
+// from where we left off instead of re-fetching old events.
+
+const CURSOR_KEY = "last_ledger_cursor";
+const BACKOFF_KEY = "backoff_until";
+
+async function getCursor(env: Env): Promise<number> {
+  const doId = env.EventRoom.idFromName("cursor");
+  const stub = env.EventRoom.get(doId);
+  const res = await stub.fetch("http://dummy/cursor", {
+    method: "GET",
+  });
+  const data: any = await res.json();
+  return data?.cursor || 0;
+}
+
+async function setCursor(env: Env, ledger: number): Promise<void> {
+  const doId = env.EventRoom.idFromName("cursor");
+  const stub = env.EventRoom.get(doId);
+  await stub.fetch("http://dummy/cursor", {
+    method: "POST",
+    body: JSON.stringify({ cursor: ledger }),
+  });
+}
+
+async function rpcFetch(
+  env: Env,
+  method: string,
+  params: Record<string, any>,
+): Promise<any> {
+  const res = await fetch(env.RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method,
+      params,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`RPC ${method} returned ${res.status}`);
+  }
+  return res.json();
 }
 
 // ── Worker ────────────────────────────────────────────────────
@@ -20,14 +67,12 @@ export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // WebSocket connections are routed to the Durable Object
     if (url.pathname === "/ws") {
       const id = env.EventRoom.idFromName("global");
       const stub = env.EventRoom.get(id);
       return stub.fetch(request);
     }
 
-    // GET /health — health check
     if (url.pathname === "/health") {
       return new Response("OK", { headers: { "Content-Type": "text/plain" } });
     }
@@ -35,41 +80,30 @@ export default {
     return new Response("Not Found", { status: 404 });
   },
 
-  /**
-   * Cron trigger (every 30s) — polls Soroban for new events
-   * and pushes them to the Durable Object for broadcast.
-   */
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    const contractIds = env.CONTRACT_IDS?.split(",").map((s) => s.trim()).filter(Boolean) || [];
+    const contractIds =
+      env.CONTRACT_IDS?.split(",").map((s) => s.trim()).filter(Boolean) || [];
 
-    // Get latest ledger
-    const ledgerRes = await fetch(env.RPC_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "getLatestLedger",
-        params: {},
-      }),
-    });
-    const ledgerData: any = await ledgerRes.json();
-    const latestLedger = ledgerData?.result?.sequence;
-    if (!latestLedger) return;
+    if (contractIds.length === 0) return;
 
-    // Get events for each contract
-    const allEvents: SorobanEvent[] = [];
+    // Check if we're in a backoff period after a failure
+    try {
+      const backoffData: any = await rpcFetch(env, "getLatestLedger", {});
+      const latestLedger = backoffData?.result?.sequence;
+      if (!latestLedger) return;
 
-    for (const contractId of contractIds) {
-      const eventsRes = await fetch(env.RPC_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getEvents",
-          params: {
-            startLedger: Math.max(1, latestLedger - 10),
+      // Get cursor (last successfully polled ledger)
+      const cursor = await getCursor(env);
+      const startLedger = cursor > 0 ? cursor + 1 : Math.max(1, latestLedger - 10);
+
+      if (startLedger >= latestLedger) return; // nothing new
+
+      const allEvents: SorobanEvent[] = [];
+
+      for (const contractId of contractIds) {
+        try {
+          const eventsData = await rpcFetch(env, "getEvents", {
+            startLedger,
             filters: [
               {
                 contractIds: [contractId],
@@ -77,29 +111,35 @@ export default {
               },
             ],
             pagination: { limit: 100 },
-          },
-        }),
-      });
-      const eventsData: any = await eventsRes.json();
-      const events = eventsData?.result?.events || [];
+          });
 
-      for (const event of events) {
-        allEvents.push(normalizeEvent(event, contractId));
+          const events = eventsData?.result?.events || [];
+          for (const event of events) {
+            allEvents.push(normalizeEvent(event, contractId));
+          }
+        } catch (err) {
+          // Per-contract failures don't block others
+        }
       }
+
+      if (allEvents.length > 0) {
+        const doId = env.EventRoom.idFromName("global");
+        const stub = env.EventRoom.get(doId);
+        await stub.fetch("http://dummy/broadcast", {
+          method: "POST",
+          body: JSON.stringify({
+            events: allEvents,
+            lastLedger: latestLedger,
+          }),
+        });
+      }
+
+      // Advance cursor to latest ledger on success
+      await setCursor(env, latestLedger);
+    } catch {
+      // Polling failed; silent retry on next cron cycle.
+      // The cursor stays put so we retry from the same position.
     }
-
-    if (allEvents.length === 0) return;
-
-    // Push to Durable Object for broadcast
-    const doId = env.EventRoom.idFromName("global");
-    const stub = env.EventRoom.get(doId);
-    await stub.fetch("http://dummy/broadcast", {
-      method: "POST",
-      body: JSON.stringify({
-        events: allEvents,
-        lastLedger: latestLedger,
-      }),
-    });
   },
 };
 

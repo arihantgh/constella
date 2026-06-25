@@ -1,6 +1,6 @@
 /**
- * EventRoom — Durable Object that maintains WebSocket connections
- * and broadcasts Soroban events to all connected clients.
+ * EventRoom — Durable Object that maintains WebSocket connections,
+ * broadcasts Soroban events, and persists the event cursor.
  */
 
 import type { SorobanEvent } from "./types";
@@ -35,10 +35,7 @@ export class EventRoom {
       const id = crypto.randomUUID();
       this.sessions.set(id, server);
 
-      server.addEventListener("message", (event) => {
-        // Client can send messages (e.g., subscribe to specific agent)
-        // For now we broadcast all events
-      });
+      server.addEventListener("message", () => {});
 
       server.addEventListener("close", () => {
         this.sessions.delete(id);
@@ -47,7 +44,7 @@ export class EventRoom {
       return new Response(null, { status: 101, webSocket: client });
     }
 
-    // POST /broadcast — called by the cron handler to push events
+    // POST /broadcast — push events to all connected WS clients
     if (url.pathname === "/broadcast" && request.method === "POST") {
       const body: { events: SorobanEvent[]; lastLedger: number } =
         await request.json();
@@ -68,6 +65,23 @@ export class EventRoom {
       }
 
       return new Response(JSON.stringify({ sent }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // GET /cursor — return the current cursor
+    if (url.pathname === "/cursor" && request.method === "GET") {
+      return new Response(JSON.stringify({ cursor: this.lastLedger }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // POST /cursor — persist the cursor
+    if (url.pathname === "/cursor" && request.method === "POST") {
+      const body: { cursor: number } = await request.json();
+      this.lastLedger = body.cursor;
+      await this.state.storage?.put("lastLedger", body.cursor);
+      return new Response(JSON.stringify({ ok: true }), {
         headers: { "Content-Type": "application/json" },
       });
     }
