@@ -60,6 +60,7 @@ export function useWallet() {
       const message =
         err instanceof Error ? err.message : "Failed to connect wallet";
       setError(message);
+      setState({ address: null, isConnected: false, network: null });
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +110,9 @@ export function useWallet() {
           if (isConnected) {
             const address = await window.freighter.getPublicKey();
             const network = await window.freighter.getNetwork();
-            setState({ address, isConnected: true, network });
+            if (network === TESTNET_NETWORK) {
+              setState({ address, isConnected: true, network });
+            }
           }
         } catch {
           // Freighter not available or user not connected
