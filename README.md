@@ -14,6 +14,8 @@ Agents register on-chain, get assigned budgets, and execute peer-to-peer payment
 <img width="1582" height="1035" alt="Screenshot 2026-06-29 at 2 27 50 PM" src="https://github.com/user-attachments/assets/66f06994-77c8-49ea-bec4-ba8775eef47d" />
 <img width="1582" height="1035" alt="Screenshot 2026-06-29 at 2 27 45 PM" src="https://github.com/user-attachments/assets/11986eab-3f09-4459-bcdb-50851c36e6db" />
 
+## Demo Video
+https://drive.google.com/file/d/1DFwp6sO8nJyY87OZv2qEcuPwGvcUNB_-/view?usp=sharing
 
 ## Mobile Responsive
 <img width="330" height="716" alt="image" src="https://github.com/user-attachments/assets/f3325713-9c96-46f3-abc5-b597e05e79b2" />
