@@ -4,6 +4,26 @@
 
 Agents register on-chain, get assigned budgets, and execute peer-to-peer payments autonomously. A dashboard provides wallet-connected management, and an event relay streams live on-chain activity to the UI.
 
+## Demo
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 12 38 50 PM" src="https://github.com/user-attachments/assets/25ce6a3e-ac82-4650-8bc7-da7f2c535c35" />
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 12 30 19 PM" src="https://github.com/user-attachments/assets/4afa1f97-6414-423c-9ab9-22877a7b962e" />
+<img width="472" height="744" alt="Screenshot 2026-06-29 at 12 28 52 PM" src="https://github.com/user-attachments/assets/9cb94e70-58b1-4e68-96d4-502e1617c562" />
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 12 28 30 PM" src="https://github.com/user-attachments/assets/6f7ce9bc-b0e5-47fa-8d76-749f7aaba2e9" />
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 1 38 58 PM" src="https://github.com/user-attachments/assets/3a0337ee-39be-4e4a-b292-ef959402e53c" />
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 2 25 54 PM" src="https://github.com/user-attachments/assets/dee77127-9a1d-4bf8-a232-648c111e92de" />
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 2 27 50 PM" src="https://github.com/user-attachments/assets/66f06994-77c8-49ea-bec4-ba8775eef47d" />
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 2 27 45 PM" src="https://github.com/user-attachments/assets/11986eab-3f09-4459-bcdb-50851c36e6db" />
+
+
+## Mobile Responsive
+<img width="1582" height="1035" alt="Screenshot 2026-06-29 at 1 38 58 PM" src="https://github.com/user-attachments/assets/31fa5e0f-eb25-4af1-b0b4-995fb2f6e160" />
+<img width="330" height="716" alt="image" src="https://github.com/user-attachments/assets/f3325713-9c96-46f3-abc5-b597e05e79b2" />
+<img width="331" height="715" alt="image" src="https://github.com/user-attachments/assets/16897168-60d7-43ba-8b84-c86e5863d284" />
+<img width="333" height="716" alt="image" src="https://github.com/user-attachments/assets/db63f9d5-2bf7-4a72-9c01-4a77d7baff30" />
+
+## CI/CD
+<img width="1460" height="885" alt="image" src="https://github.com/user-attachments/assets/31eb55cb-cb5a-4ae5-9d3b-bc3ee92c4831" />
+
 ## Architecture
 
 ```
