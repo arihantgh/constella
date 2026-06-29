@@ -23,6 +23,46 @@ Agents register on-chain, get assigned budgets, and execute peer-to-peer payment
 ## CI/CD
 <img width="1460" height="885" alt="image" src="https://github.com/user-attachments/assets/31eb55cb-cb5a-4ae5-9d3b-bc3ee92c4831" />
 
+## Deployed Contracts (Testnet)
+
+All three contracts are deployed to Stellar Testnet and can be viewed on [Stellar Expert](https://stellar.expert/explorer/testnet/) or the [Stellar Lab](https://lab.stellar.org/).
+
+| Contract | Address | Stellar Expert | Deploy TX |
+|---|---|---|---|
+| **Agent Registry** | `CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR` | [View](https://stellar.expert/explorer/testnet/contract/CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR) | [`430d8f60...`](https://stellar.expert/explorer/testnet/tx/430d8f60990757cc961080b9268dbcc6b0d4ad0b272eb6c81bb1a29ac27a9df2) |
+| **Budget Policy** | `CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA` | [View](https://stellar.expert/explorer/testnet/contract/CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA) | [`af35d9c5...`](https://stellar.expert/explorer/testnet/tx/af35d9c516e932c1d4746adefbc935ae53594a7898fa8e06e3092d9aa88cc970) |
+| **Payment** | `CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ` | [View](https://stellar.expert/explorer/testnet/contract/CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ) | [`4e706ffe...`](https://stellar.expert/explorer/testnet/tx/4e706ffe5e2d9f062531994839088694f02c8b028727270e900dca5f47c522f9) |
+
+These addresses are also written to `scripts/contracts.json`. To use them locally, copy them into `frontend/.env.local`:
+
+```
+NEXT_PUBLIC_AGENT_REGISTRY_ID=CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR
+NEXT_PUBLIC_BUDGET_POLICY_ID=CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA
+NEXT_PUBLIC_PAYMENT_ID=CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ
+```
+
+## Contract Details
+
+### Agent Registry
+
+- `register_agent(agent, owner, metadata)` — register a new agent
+- `get_agent(agent)` — lookup agent details
+- `deactivate_agent(agent, caller)` — deactivate an agent (caller must be owner)
+- `is_active(agent)` — check if agent is active
+
+### Budget Policy
+
+- `set_budget(agent, owner, per_tx_limit, daily_limit)` — configure or update budget
+- `check_and_reserve(agent, amount)` — check limits and reserve spend (returns bool)
+- `get_budget(agent)` — get current budget state
+
+### Payment
+
+- `create_payment(from, to, amount, token, task_ref)` — create a payment record
+- `execute_payment(payment_id, registry_id, policy_id, token_id)` — execute (validates + transfers)
+- `refund_payment(payment_id, caller)` — refund an executed payment
+- `get_payment(payment_id)` — get payment status
+
 ## Architecture
 
 ```
@@ -318,46 +358,6 @@ Try the different profiles (see [`scripts/simulate.mjs`](scripts/simulate.mjs)):
 ### 7. Verify Budget Enforcement
 
 Try creating a payment that exceeds the per-tx budget (e.g., amount `5000` when the limit is `1000`). The contract rejects it and the live feed shows a red **Payment Rejected** card — proving the guardrail works on-chain, not just in the UI.
-
-## Deployed Contracts (Testnet)
-
-All three contracts are deployed to Stellar Testnet and can be viewed on [Stellar Expert](https://stellar.expert/explorer/testnet/) or the [Stellar Lab](https://lab.stellar.org/).
-
-| Contract | Address | Stellar Expert | Deploy TX |
-|---|---|---|---|
-| **Agent Registry** | `CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR` | [View](https://stellar.expert/explorer/testnet/contract/CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR) | [`430d8f60...`](https://stellar.expert/explorer/testnet/tx/430d8f60990757cc961080b9268dbcc6b0d4ad0b272eb6c81bb1a29ac27a9df2) |
-| **Budget Policy** | `CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA` | [View](https://stellar.expert/explorer/testnet/contract/CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA) | [`af35d9c5...`](https://stellar.expert/explorer/testnet/tx/af35d9c516e932c1d4746adefbc935ae53594a7898fa8e06e3092d9aa88cc970) |
-| **Payment** | `CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ` | [View](https://stellar.expert/explorer/testnet/contract/CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ) | [`4e706ffe...`](https://stellar.expert/explorer/testnet/tx/4e706ffe5e2d9f062531994839088694f02c8b028727270e900dca5f47c522f9) |
-
-These addresses are also written to `scripts/contracts.json`. To use them locally, copy them into `frontend/.env.local`:
-
-```
-NEXT_PUBLIC_AGENT_REGISTRY_ID=CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR
-NEXT_PUBLIC_BUDGET_POLICY_ID=CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA
-NEXT_PUBLIC_PAYMENT_ID=CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ
-```
-
-## Contract Details
-
-### Agent Registry
-
-- `register_agent(agent, owner, metadata)` — register a new agent
-- `get_agent(agent)` — lookup agent details
-- `deactivate_agent(agent, caller)` — deactivate an agent (caller must be owner)
-- `is_active(agent)` — check if agent is active
-
-### Budget Policy
-
-- `set_budget(agent, owner, per_tx_limit, daily_limit)` — configure or update budget
-- `check_and_reserve(agent, amount)` — check limits and reserve spend (returns bool)
-- `get_budget(agent)` — get current budget state
-
-### Payment
-
-- `create_payment(from, to, amount, token, task_ref)` — create a payment record
-- `execute_payment(payment_id, registry_id, policy_id, token_id)` — execute (validates + transfers)
-- `refund_payment(payment_id, caller)` — refund an executed payment
-- `get_payment(payment_id)` — get payment status
 
 ## License
 
