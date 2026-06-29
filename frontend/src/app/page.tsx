@@ -26,7 +26,7 @@ export default function Home() {
       address,
       config.contracts.agent_registry.id,
       "register_agent",
-      [agentId, owner, metadata],
+      [agentId, owner, new TextEncoder().encode(metadata || "")],
       TESTNET_NETWORK_PASSPHRASE,
     );
     await signAndSend(xdr);
@@ -40,7 +40,7 @@ export default function Home() {
       address,
       config.contracts.budget_policy.id,
       "set_budget",
-      [agentId, address, perTxLimit, dailyLimit],
+      [agentId, address, Number(perTxLimit), Number(dailyLimit)],
       TESTNET_NETWORK_PASSPHRASE,
     );
     await signAndSend(xdr);
@@ -68,7 +68,7 @@ export default function Home() {
       address,
       config.contracts.payment.id,
       "create_payment",
-      [fromAgent, toAgent, amount, nativeToken, taskRef],
+      [fromAgent, toAgent, Number(amount), nativeToken, new TextEncoder().encode(taskRef || "")],
       TESTNET_NETWORK_PASSPHRASE,
     );
     const hash = await signAndSend(xdr);
@@ -152,7 +152,7 @@ export default function Home() {
               <div className="grid gap-6 lg:grid-cols-2">
                 <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
                   <h2 className="mb-4 text-lg font-semibold">Register Agent</h2>
-                  <AgentRegistrationForm onRegister={handleRegister} />
+                  <AgentRegistrationForm onRegister={handleRegister} defaultOwner={address ?? undefined} />
                 </section>
                 <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
                   <h2 className="mb-4 text-lg font-semibold">Registered Agents</h2>

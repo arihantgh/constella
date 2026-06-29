@@ -12,7 +12,29 @@ import type { WalletState } from "@/lib/types";
 import {
   TESTNET_NETWORK,
   TESTNET_NETWORK_PASSPHRASE,
+  TESTNET_RPC_URL,
 } from "@/lib/constants";
+
+async function pollForTx(hash: string, maxTries = 20): Promise<void> {
+  for (let i = 0; i < maxTries; i++) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const res = await fetch(TESTNET_RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "getTransaction",
+        params: { hash },
+      }),
+    });
+    const data = await res.json();
+    const status = data.result?.status;
+    if (status === "SUCCESS") return;
+    if (status === "FAILED") throw new Error(`Transaction failed: ${hash}`);
+  }
+  throw new Error("Transaction not confirmed within timeout");
+}
 
 export function useWallet() {
   const [state, setState] = useState<WalletState>({
@@ -77,9 +99,20 @@ export function useWallet() {
     async (xdr: string): Promise<string> => {
       if (!state.address) throw new Error("Wallet not connected");
 
-      const signedXdr = await signTransaction(xdr, {
+      const signResult = await signTransaction(xdr, {
         networkPassphrase: TESTNET_NETWORK_PASSPHRASE,
       });
+
+      if (signResult.error) {
+        throw new Error(
+          typeof signResult.error === "string"
+            ? signResult.error
+            : signResult.error.message || JSON.stringify(signResult.error),
+        );
+      }
+
+      const signedXdr = signResult.signedTxXdr;
+      if (!signedXdr) throw new Error("Failed to sign transaction");
 
       // Submit to Soroban RPC
       const response = await fetch(
@@ -98,7 +131,17 @@ export function useWallet() {
       );
 
       const result = await response.json();
-      return result.result?.hash || signedXdr;
+      if (result.error) {
+        throw new Error(
+          result.error.message || JSON.stringify(result.error),
+        );
+      }
+
+      const hash = result.result?.hash;
+      if (hash) {
+        await pollForTx(hash);
+      }
+      return hash || signedXdr;
     },
     [state.address]
   );

@@ -68,6 +68,11 @@ impl AgentRegistry {
         }
     }
 
+    pub fn try_get_agent(env: Env, agent_id: Address) -> Option<AgentInfo> {
+        let key = (AGENT_KEY, agent_id);
+        env.storage().instance().get(&key)
+    }
+
     pub fn get_agent(env: Env, agent_id: Address) -> AgentInfo {
         let key = (AGENT_KEY, agent_id);
         env.storage()

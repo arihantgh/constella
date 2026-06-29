@@ -22,7 +22,7 @@ export interface WalletState {
 export interface AgentInfo {
   agent_id: string;
   owner: string;
-  metadata: string;
+  metadata: string | Uint8Array | Buffer;
   active: boolean;
   created_at: number;
 }
