@@ -19,6 +19,7 @@ function getConfigOrThrow(): ContractConfig {
 }
 
 function scValFor(a: any): any {
+  if (typeof a === "string") a = a.trim();
   if (typeof a === "string" && (a.startsWith("G") || a.startsWith("C")) && a.length === 56)
     return nativeToScVal(a, { type: "address" });
   if (typeof a === "number")

@@ -17,7 +17,28 @@ type Tab = "agents" | "budgets" | "payments";
 export default function Home() {
   const { address, isConnected, network, isLoading, error, connect, disconnect, signAndSend } = useWallet();
   const [tab, setTab] = useState<Tab>("agents");
-  const [knownAgents, setKnownAgents] = useState<string[]>([]);
+  const [knownAgents, setKnownAgents] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("knownAgents");
+        if (stored) return JSON.parse(stored);
+      } catch {}
+    }
+    return [];
+  });
+
+  const saveKnownAgents = (agents: string[]) => {
+    setKnownAgents(agents);
+    try { localStorage.setItem("knownAgents", JSON.stringify(agents)); } catch {}
+  };
+
+  const addKnownAgent = (agentId: string) => {
+    setKnownAgents((prev) => {
+      const next = prev.includes(agentId) ? prev : [...prev, agentId];
+      try { localStorage.setItem("knownAgents", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   const handleRegister = async (agentId: string, owner: string, metadata: string) => {
     if (!address) throw new Error("Wallet not connected");
@@ -30,7 +51,7 @@ export default function Home() {
       TESTNET_NETWORK_PASSPHRASE,
     );
     await signAndSend(xdr);
-    setKnownAgents((prev) => (prev.includes(agentId) ? prev : [...prev, agentId]));
+    addKnownAgent(agentId);
   };
 
   const handleSetBudget = async (agentId: string, perTxLimit: string, dailyLimit: string) => {
@@ -156,7 +177,7 @@ export default function Home() {
                 </section>
                 <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
                   <h2 className="mb-4 text-lg font-semibold">Registered Agents</h2>
-                  <AgentList knownAgents={knownAgents} />
+                  <AgentList knownAgents={knownAgents} onAddAgent={addKnownAgent} />
                 </section>
               </div>
             </ErrorBoundary>
