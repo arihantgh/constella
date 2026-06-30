@@ -8,6 +8,7 @@ import { BudgetForm } from "@/components/BudgetForm";
 import { PaymentFeed } from "@/components/PaymentFeed";
 import { PaymentForm } from "@/components/PaymentForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { WalletGuard } from "@/components/WalletGuard";
 import { buildWriteTx } from "@/lib/soroban";
 import { getConfig } from "@/lib/config";
 import { TESTNET_NETWORK_PASSPHRASE } from "@/lib/constants";
@@ -76,14 +77,10 @@ export default function Home() {
     if (!address) throw new Error("Wallet not connected");
     const config = getConfig();
 
-    // Find the token address from the from-agent's budget
-    // (in production, the frontend would let the user pick the token)
     const paymentId = await new Promise<string | null>((resolve) => {
-      // For now, the payment is created via the contract
       resolve(null);
     });
 
-    // Use native token for simplicity
     const nativeToken = "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4";
     const xdr = await buildWriteTx(
       address,
@@ -135,79 +132,69 @@ export default function Home() {
         </div>
       </header>
 
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-800 bg-red-900/30 px-4 py-3 text-sm text-red-300">
-          {error}
+      <WalletGuard
+        isConnected={isConnected}
+        address={address}
+        isLoading={isLoading}
+        error={error}
+        onConnect={connect}
+      >
+        {/* Tab bar */}
+        <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg border border-gray-800 bg-gray-900/50 p-1">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`min-h-[44px] flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition ${
+                tab === t.key
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-400 hover:text-gray-200"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-      )}
 
-      {!isConnected ? (
-        <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6 text-center">
-          <h2 className="mb-2 text-lg font-semibold">Welcome to constella</h2>
-          <p className="text-sm text-gray-400">
-            Connect your Freighter wallet (Testnet) to register agents, set budgets, and monitor
-            autonomous agent-to-agent payments.
-          </p>
-        </section>
-      ) : (
-        <>
-          {/* Tab bar */}
-          <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg border border-gray-800 bg-gray-900/50 p-1">
-            {tabs.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`min-h-[44px] flex-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition ${
-                  tab === t.key
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {tab === "agents" && (
-            <ErrorBoundary>
-              <div className="grid gap-6 lg:grid-cols-2">
-                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                  <h2 className="mb-4 text-lg font-semibold">Register Agent</h2>
-                  <AgentRegistrationForm onRegister={handleRegister} defaultOwner={address ?? undefined} />
-                </section>
-                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                  <h2 className="mb-4 text-lg font-semibold">Registered Agents</h2>
-                  <AgentList knownAgents={knownAgents} onAddAgent={addKnownAgent} />
-                </section>
-              </div>
-            </ErrorBoundary>
-          )}
-
-          {tab === "budgets" && (
-            <ErrorBoundary>
-              <section className="mx-auto max-w-lg rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                <h2 className="mb-4 text-lg font-semibold">Set Budget</h2>
-                <BudgetForm onSetBudget={handleSetBudget} />
+        {tab === "agents" && (
+          <ErrorBoundary>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Register Agent</h2>
+                <AgentRegistrationForm onRegister={handleRegister} defaultOwner={address ?? undefined} />
               </section>
-            </ErrorBoundary>
-          )}
+              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Registered Agents</h2>
+                <AgentList knownAgents={knownAgents} onAddAgent={addKnownAgent} />
+              </section>
+            </div>
+          </ErrorBoundary>
+        )}
 
-          {tab === "payments" && (
-            <ErrorBoundary>
-              <div className="grid gap-6 lg:grid-cols-2">
-                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                  <h2 className="mb-4 text-lg font-semibold">Create Payment</h2>
-                  <PaymentForm onCreatePayment={handleCreatePayment} />
-                </section>
-                <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                  <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
-                  <PaymentFeed />
-                </section>
-              </div>
-            </ErrorBoundary>
-          )}
-        </>
-      )}
+        {tab === "budgets" && (
+          <ErrorBoundary>
+            <section className="mx-auto max-w-lg rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+              <h2 className="mb-4 text-lg font-semibold">Set Budget</h2>
+              <BudgetForm onSetBudget={handleSetBudget} />
+            </section>
+          </ErrorBoundary>
+        )}
+
+        {tab === "payments" && (
+          <ErrorBoundary>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Create Payment</h2>
+                <PaymentForm onCreatePayment={handleCreatePayment} />
+              </section>
+              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
+                <PaymentFeed />
+              </section>
+            </div>
+          </ErrorBoundary>
+        )}
+      </WalletGuard>
     </main>
   );
 }
