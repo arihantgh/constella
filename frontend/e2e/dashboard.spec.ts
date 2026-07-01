@@ -6,7 +6,7 @@ const TEST_ADDRESS = "GABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMN";
 async function mockFreighter(page: Page) {
   await page.addInitScript(
     ({ address, network }) => {
-      (window as any).freighter = {
+      (window as Record<string, unknown>).freighter = {
         isConnected: () => Promise.resolve({ isConnected: true }),
         getPublicKey: () => Promise.resolve(address),
         getNetwork: () => Promise.resolve(network),

@@ -5,6 +5,7 @@ import {
   TransactionBuilder,
   rpc,
   Account,
+  xdr,
 } from "@stellar/stellar-sdk";
 import type { ContractConfig, AgentInfo, Budget } from "./types";
 import { TESTNET_RPC_URL, TESTNET_NETWORK_PASSPHRASE } from "./constants";
@@ -18,7 +19,9 @@ function getConfigOrThrow(): ContractConfig {
   return c;
 }
 
-function scValFor(a: any): any {
+type ScValArg = string | number | Uint8Array;
+
+function scValFor(a: ScValArg): xdr.ScVal {
   if (typeof a === "string") a = a.trim();
   if (typeof a === "string" && (a.startsWith("G") || a.startsWith("C")) && a.length === 56)
     return nativeToScVal(a, { type: "address" });
@@ -31,12 +34,11 @@ function scValFor(a: any): any {
   return nativeToScVal(a);
 }
 
-/** Build contract call ScVal args. */
-function buildArgs(args: any[]) {
+function buildArgs(args: ScValArg[]): xdr.ScVal[] {
   return args.map(scValFor);
 }
 
-function makeSimulationTx(contractId: string, method: string, args: any[]) {
+function makeSimulationTx(contractId: string, method: string, args: ScValArg[]) {
   // For simulation, we don't need a real funded account — any valid source works.
   // Use a well-known Testnet account as the dummy source.
   const DUMMY_SOURCE = "GB3KJPLFUYN5VL6R3GU3EGCGVCKFDSD7BEDX42HWG5BWFKB3KQGJJRMA";
@@ -90,7 +92,7 @@ export async function buildWriteTx(
   source: string,
   contractId: string,
   method: string,
-  args: any[],
+  args: ScValArg[],
   networkPassphrase: string,
 ): Promise<string> {
   const account = await server.getAccount(source);

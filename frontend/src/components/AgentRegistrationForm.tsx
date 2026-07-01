@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface Props {
   onRegister: (agentId: string, owner: string, metadata: string) => Promise<void>;
@@ -9,13 +9,7 @@ interface Props {
 
 export function AgentRegistrationForm({ onRegister, defaultOwner }: Props) {
   const [agentId, setAgentId] = useState("");
-  const [owner, setOwner] = useState("");
-
-  useEffect(() => {
-    if (defaultOwner && !owner) {
-      setOwner(defaultOwner);
-    }
-  }, [defaultOwner]);
+  const [owner, setOwner] = useState(defaultOwner || "");
   const [metadata, setMetadata] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

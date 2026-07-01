@@ -6,7 +6,7 @@ export interface SorobanEvent {
   type: string;
   contract_id: string;
   topic: string[];
-  data: any;
+  data: unknown;
   ledger: number;
   tx_hash: string;
   timestamp: string;
@@ -19,6 +19,14 @@ export function useEventFeed() {
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const connectRef = useRef<() => void>(() => {});
+
+  const scheduleReconnect = useCallback((delay: number) => {
+    clearTimeout(reconnectTimer.current);
+    reconnectTimer.current = setTimeout(() => {
+      connectRef.current();
+    }, delay);
+  }, []);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -40,17 +48,21 @@ export function useEventFeed() {
       ws.onclose = () => {
         setConnected(false);
         wsRef.current = null;
-        // Auto-reconnect after 3s
-        reconnectTimer.current = setTimeout(connect, 3000);
+        scheduleReconnect(3000);
       };
 
       ws.onerror = () => ws.close();
       wsRef.current = ws;
     } catch {
       // WebSocket not supported or relay unreachable
-      reconnectTimer.current = setTimeout(connect, 5000);
+      scheduleReconnect(5000);
     }
-  }, []);
+  }, [scheduleReconnect]);
+
+  // Keep connectRef in sync after renders
+  useEffect(() => {
+    connectRef.current = connect;
+  });
 
   useEffect(() => {
     connect();

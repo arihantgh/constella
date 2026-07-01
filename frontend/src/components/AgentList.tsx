@@ -2,7 +2,7 @@
 
 import type { AgentInfo } from "@/lib/types";
 import { queryAgent } from "@/lib/soroban";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   knownAgents: string[];
@@ -10,32 +10,41 @@ interface Props {
   onAddAgent?: (id: string) => void;
 }
 
-export function AgentList({ knownAgents, onRefresh, onAddAgent }: Props) {
+export function AgentList({ knownAgents, onAddAgent }: Props) {
   const [agents, setAgents] = useState<Record<string, AgentInfo | null>>({});
   const [loading, setLoading] = useState(false);
   const [lookupId, setLookupId] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
 
-  const fetchAgents = useCallback(async () => {
-    if (knownAgents.length === 0) return;
-    setLoading(true);
-    const results: Record<string, AgentInfo | null> = {};
-    await Promise.all(
-      knownAgents.map(async (id) => {
-        try {
-          results[id] = await queryAgent(id);
-        } catch {
-          results[id] = null;
-        }
-      }),
-    );
-    setAgents(results);
-    setLoading(false);
-  }, [knownAgents]);
+  const refresh = () => setRefreshKey((k) => k + 1);
+
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchAgents();
-  }, [fetchAgents]);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (knownAgents.length === 0) return;
+
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.all(
+      knownAgents.map(async (id) => {
+        try {
+          const info = await queryAgent(id);
+          if (!cancelled) setAgents((prev) => ({ ...prev, [id]: info }));
+        } catch {
+          if (!cancelled) setAgents((prev) => ({ ...prev, [id]: null }));
+        }
+      }),
+    ).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [knownAgents, refreshKey]);
 
   const handleAddLookup = () => {
     const trimmed = lookupId.trim();
@@ -78,7 +87,7 @@ export function AgentList({ knownAgents, onRefresh, onAddAgent }: Props) {
         <div className="rounded-lg border border-dashed border-gray-700 p-4 text-center">
           <p className="text-sm text-gray-400 mb-1">No agents loaded</p>
           <p className="text-xs text-gray-500">
-            Register a new agent using the form, or paste an existing agent's address above and click Lookup.
+            Register a new agent using the form, or paste an existing agent&apos;s address above and click Lookup.
           </p>
         </div>
       )}
@@ -90,7 +99,7 @@ export function AgentList({ knownAgents, onRefresh, onAddAgent }: Props) {
             {knownAgents.length} agent{knownAgents.length !== 1 ? "s" : ""}
           </span>
           <button
-            onClick={fetchAgents}
+            onClick={refresh}
             disabled={loading}
             className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50"
           >

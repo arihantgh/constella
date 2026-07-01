@@ -16,7 +16,7 @@ import { TESTNET_NETWORK_PASSPHRASE } from "@/lib/constants";
 type Tab = "agents" | "budgets" | "payments";
 
 export default function Home() {
-  const { address, isConnected, network, isLoading, error, connect, disconnect, signAndSend } = useWallet();
+  const { address, isConnected, isLoading, error, connect, disconnect, signAndSend } = useWallet();
   const [tab, setTab] = useState<Tab>("agents");
   const [knownAgents, setKnownAgents] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
@@ -27,11 +27,6 @@ export default function Home() {
     }
     return [];
   });
-
-  const saveKnownAgents = (agents: string[]) => {
-    setKnownAgents(agents);
-    try { localStorage.setItem("knownAgents", JSON.stringify(agents)); } catch {}
-  };
 
   const addKnownAgent = (agentId: string) => {
     setKnownAgents((prev) => {
@@ -76,10 +71,6 @@ export default function Home() {
   ): Promise<string | null> => {
     if (!address) throw new Error("Wallet not connected");
     const config = getConfig();
-
-    const paymentId = await new Promise<string | null>((resolve) => {
-      resolve(null);
-    });
 
     const nativeToken = "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4";
     const xdr = await buildWriteTx(
