@@ -14,6 +14,9 @@ Agents register on-chain, get assigned budgets, and execute peer-to-peer payment
 <img width="1582" height="1035" alt="Screenshot 2026-06-29 at 2 27 50 PM" src="https://github.com/user-attachments/assets/66f06994-77c8-49ea-bec4-ba8775eef47d" />
 <img width="1582" height="1035" alt="Screenshot 2026-06-29 at 2 27 45 PM" src="https://github.com/user-attachments/assets/11986eab-3f09-4459-bcdb-50851c36e6db" />
 
+## Deloyed
+https://constella-3bg.pages.dev
+
 ## Demo Video
 https://drive.google.com/file/d/1DFwp6sO8nJyY87OZv2qEcuPwGvcUNB_-/view?usp=sharing
 
