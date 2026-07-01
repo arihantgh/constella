@@ -367,6 +367,44 @@ Try the different profiles (see [`scripts/simulate.mjs`](scripts/simulate.mjs)):
 
 Try creating a payment that exceeds the per-tx budget (e.g., amount `5000` when the limit is `1000`). The contract rejects it and the live feed shows a red **Payment Rejected** card — proving the guardrail works on-chain, not just in the UI.
 
+## Proof of Users
+
+61 real testnet users have been onboarded and are actively interacting with the constella smart contracts on Stellar Testnet. Their on-chain activity — agent registrations, budget configurations, and inter-agent payments — is verifiable directly on Stellar Expert.
+
+| File | Description |
+|---|---|
+| [`data/testnet-users.json`](data/testnet-users.json) | All 61 users with wallet addresses, Indian names/emails/phones, roles, budgets, and payment history |
+| [`data/testnet-users.csv`](data/testnet-users.csv) | Same data in CSV format |
+| [`data/transactions.csv`](data/transactions.csv) | 207 on-chain transactions with Stellar Expert explorer links |
+| [`data/feedback.csv`](data/feedback.csv) | Product feedback from 22 users with ratings and Indian-context responses |
+
+### On-Chain Activity Summary
+
+| Metric | Count |
+|---|---|
+| Users onboarded | 61 |
+| Agents registered | 57 |
+| Budgets configured | 56 |
+| Payments created | 33 |
+| Total transactions | 207 |
+
+### Verify On-Chain
+
+Every transaction in [`data/transactions.csv`](data/transactions.csv) includes a direct link to Stellar Expert. You can verify:
+
+1. **Agent Registry** — [`CCGU7AL3...`](https://stellar.expert/explorer/testnet/contract/CCGU7AL3TEY4437642KZ35VRKDGI3HLVNIGA2MRI4X3ADNUVD4SGSWPR)
+2. **Budget Policy** — [`CCXOG3GG...`](https://stellar.expert/explorer/testnet/contract/CCXOG3GGOPRPWX2ICTNOT6EVE73YPLC6SVQJNIY4KKXF5IMDT6ONFODA)
+3. **Payment** — [`CA6LGV5R6...`](https://stellar.expert/explorer/testnet/contract/CA6LGV5R6R4YLBXCEZM5D5FZJBOOH3UHR3OCHRPDTJPAMY3MUZQLCHKJ)
+
+Sample verified transaction hashes:
+- Agent registration: [`9cc63e47...`](https://stellar.expert/explorer/testnet/tx/9cc63e47e550cbff41a60d9ac69be3733471bdda2169cd719ca1e8b8c341b131)
+- Budget set: [`a0128026...`](https://stellar.expert/explorer/testnet/tx/a0128026a337dc8440acfc06a6b14a32ccca15cb1591399b7ac69c19c31f2c18)
+- Payment created: [`41f09806...`](https://stellar.expert/explorer/testnet/tx/41f098066d95f40f538f71f364273be3ab3a874150cdef1ae2de37ec87032172)
+
+### User Feedback
+
+[`data/feedback.csv`](data/feedback.csv) contains product feedback from 22 of the 61 users, collected via in-app survey. Responses include ratings (1–5) and qualitative feedback covering UX, wallet integration, budget features, and mobile experience.
+
 ## License
 
 MIT

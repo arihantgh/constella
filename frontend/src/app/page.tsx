@@ -12,21 +12,33 @@ import { WalletGuard } from "@/components/WalletGuard";
 import { buildWriteTx } from "@/lib/soroban";
 import { getConfig } from "@/lib/config";
 import { TESTNET_NETWORK_PASSPHRASE } from "@/lib/constants";
+import { SEED_AGENT_ADDRESSES } from "@/lib/seed-agents";
 
 type Tab = "agents" | "budgets" | "payments";
 
 export default function Home() {
-  const { address, isConnected, isLoading, error, connect, disconnect, signAndSend } = useWallet();
+  const { address, isConnected, network, isLoading, error, connect, disconnect, signAndSend } = useWallet();
   const [tab, setTab] = useState<Tab>("agents");
   const [knownAgents, setKnownAgents] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("knownAgents");
-        if (stored) return JSON.parse(stored);
+        const parsed: string[] = stored ? JSON.parse(stored) : [];
+        // Merge seed agents that aren't already in the user's list
+        const merged = [...new Set([...parsed, ...SEED_AGENT_ADDRESSES])];
+        if (merged.length !== parsed.length) {
+          localStorage.setItem("knownAgents", JSON.stringify(merged));
+        }
+        return merged;
       } catch {}
     }
-    return [];
+    return SEED_AGENT_ADDRESSES;
   });
+
+  const saveKnownAgents = (agents: string[]) => {
+    setKnownAgents(agents);
+    try { localStorage.setItem("knownAgents", JSON.stringify(agents)); } catch {}
+  };
 
   const addKnownAgent = (agentId: string) => {
     setKnownAgents((prev) => {
@@ -71,6 +83,10 @@ export default function Home() {
   ): Promise<string | null> => {
     if (!address) throw new Error("Wallet not connected");
     const config = getConfig();
+
+    const paymentId = await new Promise<string | null>((resolve) => {
+      resolve(null);
+    });
 
     const nativeToken = "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4";
     const xdr = await buildWriteTx(

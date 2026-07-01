@@ -11,3 +11,12 @@ coverage/
 
 prd.md
 .commandcode
+
+# Seed scripts — generate testnet data (not committed)
+scripts/seed-testnet.mjs
+scripts/seed-testnet.sh
+scripts/generate-feedback.mjs
+
+# Seed intermediate state (contains private keys)
+data/.seed-state.json
+data/.seed-secrets.json
