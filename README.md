@@ -65,9 +65,11 @@ Sample verified transaction hashes:
 - Budget set: [`a0128026...`](https://stellar.expert/explorer/testnet/tx/a0128026a337dc8440acfc06a6b14a32ccca15cb1591399b7ac69c19c31f2c18)
 - Payment created: [`41f09806...`](https://stellar.expert/explorer/testnet/tx/41f098066d95f40f538f71f364273be3ab3a874150cdef1ae2de37ec87032172)
 
-### User Feedback
+## Feedback Form
+https://docs.google.com/forms/d/e/1FAIpQLSdlWq1o723XapPdiOq9h1viVGqY-x-c7yRv9ntwJrZpYq7sEg/viewform?usp=publish-editor
 
-[`data/feedback.csv`](data/feedback.csv) contains product feedback from 22 of the 61 users, collected via in-app survey. Responses include ratings (1–5) and qualitative feedback covering UX, wallet integration, budget features, and mobile experience.
+## Feedback Responses
+https://docs.google.com/spreadsheets/d/1Rk1Y8P_xq9-qSYhwaq-YUSMxRH7gw3XF-LJf1OIm2EY/edit?usp=sharing
 
 ## Deployed Contracts (Testnet)
 
