@@ -9,22 +9,27 @@ import { PaymentFeed } from "@/components/PaymentFeed";
 import { PaymentForm } from "@/components/PaymentForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WalletGuard } from "@/components/WalletGuard";
-import { buildWriteTx } from "@/lib/soroban";
-import { getConfig } from "@/lib/config";
+import {
+  buildRegisterAgentTx,
+  buildDeactivateAgentTx,
+  buildSetBudgetTx,
+  buildCreatePaymentTx,
+  buildExecutePaymentTx,
+  buildRefundPaymentTx,
+} from "@/lib/soroban";
 import { TESTNET_NETWORK_PASSPHRASE } from "@/lib/constants";
 import { SEED_AGENT_ADDRESSES } from "@/lib/seed-agents";
 
 type Tab = "agents" | "budgets" | "payments";
 
 export default function Home() {
-  const { address, isConnected, network, isLoading, error, connect, disconnect, signAndSend } = useWallet();
+  const { address, isConnected, isLoading, error, connect, disconnect, signAndSend } = useWallet();
   const [tab, setTab] = useState<Tab>("agents");
   const [knownAgents, setKnownAgents] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("knownAgents");
         const parsed: string[] = stored ? JSON.parse(stored) : [];
-        // Merge seed agents that aren't already in the user's list
         const merged = [...new Set([...parsed, ...SEED_AGENT_ADDRESSES])];
         if (merged.length !== parsed.length) {
           localStorage.setItem("knownAgents", JSON.stringify(merged));
@@ -34,11 +39,6 @@ export default function Home() {
     }
     return SEED_AGENT_ADDRESSES;
   });
-
-  const saveKnownAgents = (agents: string[]) => {
-    setKnownAgents(agents);
-    try { localStorage.setItem("knownAgents", JSON.stringify(agents)); } catch {}
-  };
 
   const addKnownAgent = (agentId: string) => {
     setKnownAgents((prev) => {
@@ -50,28 +50,20 @@ export default function Home() {
 
   const handleRegister = async (agentId: string, owner: string, metadata: string) => {
     if (!address) throw new Error("Wallet not connected");
-    const config = getConfig();
-    const xdr = await buildWriteTx(
-      address,
-      config.contracts.agent_registry.id,
-      "register_agent",
-      [agentId, owner, new TextEncoder().encode(metadata || "")],
-      TESTNET_NETWORK_PASSPHRASE,
-    );
+    const xdr = await buildRegisterAgentTx(address, agentId, owner, metadata, TESTNET_NETWORK_PASSPHRASE);
     await signAndSend(xdr);
     addKnownAgent(agentId);
   };
 
+  const handleDeactivate = async (agentId: string) => {
+    if (!address) throw new Error("Wallet not connected");
+    const xdr = await buildDeactivateAgentTx(address, agentId, TESTNET_NETWORK_PASSPHRASE);
+    await signAndSend(xdr);
+  };
+
   const handleSetBudget = async (agentId: string, perTxLimit: string, dailyLimit: string) => {
     if (!address) throw new Error("Wallet not connected");
-    const config = getConfig();
-    const xdr = await buildWriteTx(
-      address,
-      config.contracts.budget_policy.id,
-      "set_budget",
-      [agentId, address, Number(perTxLimit), Number(dailyLimit)],
-      TESTNET_NETWORK_PASSPHRASE,
-    );
+    const xdr = await buildSetBudgetTx(address, agentId, perTxLimit, dailyLimit, TESTNET_NETWORK_PASSPHRASE);
     await signAndSend(xdr);
   };
 
@@ -82,20 +74,25 @@ export default function Home() {
     taskRef: string,
   ): Promise<string | null> => {
     if (!address) throw new Error("Wallet not connected");
-    const config = getConfig();
+    const xdr = await buildCreatePaymentTx(address, fromAgent, toAgent, amount, taskRef, TESTNET_NETWORK_PASSPHRASE);
+    const hash = await signAndSend(xdr);
+    return hash;
+  };
 
-    const paymentId = await new Promise<string | null>((resolve) => {
-      resolve(null);
-    });
+  const handleExecutePayment = async (
+    paymentId: number,
+  ): Promise<string | null> => {
+    if (!address) throw new Error("Wallet not connected");
+    const xdr = await buildExecutePaymentTx(address, paymentId, TESTNET_NETWORK_PASSPHRASE);
+    const hash = await signAndSend(xdr);
+    return hash;
+  };
 
-    const nativeToken = "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4";
-    const xdr = await buildWriteTx(
-      address,
-      config.contracts.payment.id,
-      "create_payment",
-      [fromAgent, toAgent, Number(amount), nativeToken, new TextEncoder().encode(taskRef || "")],
-      TESTNET_NETWORK_PASSPHRASE,
-    );
+  const handleRefundPayment = async (
+    paymentId: number,
+  ): Promise<string | null> => {
+    if (!address) throw new Error("Wallet not connected");
+    const xdr = await buildRefundPaymentTx(address, paymentId, TESTNET_NETWORK_PASSPHRASE);
     const hash = await signAndSend(xdr);
     return hash;
   };
@@ -172,7 +169,12 @@ export default function Home() {
               </section>
               <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
                 <h2 className="mb-4 text-lg font-semibold">Registered Agents</h2>
-                <AgentList knownAgents={knownAgents} onAddAgent={addKnownAgent} />
+                <AgentList
+                  knownAgents={knownAgents}
+                  onAddAgent={addKnownAgent}
+                  walletAddress={address ?? undefined}
+                  onDeactivate={handleDeactivate}
+                />
               </section>
             </div>
           </ErrorBoundary>
@@ -190,9 +192,15 @@ export default function Home() {
         {tab === "payments" && (
           <ErrorBoundary>
             <div className="grid gap-6 lg:grid-cols-2">
-              <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-                <h2 className="mb-4 text-lg font-semibold">Create Payment</h2>
-                <PaymentForm onCreatePayment={handleCreatePayment} />
+              <section className="space-y-6">
+                <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                  <h2 className="mb-4 text-lg font-semibold">Create Payment</h2>
+                  <PaymentForm
+                    onCreatePayment={handleCreatePayment}
+                    onExecutePayment={handleExecutePayment}
+                    onRefundPayment={handleRefundPayment}
+                  />
+                </div>
               </section>
               <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
                 <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>

@@ -2,49 +2,43 @@
 
 import type { AgentInfo } from "@/lib/types";
 import { queryAgent } from "@/lib/soroban";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Props {
   knownAgents: string[];
   onRefresh?: () => void;
   onAddAgent?: (id: string) => void;
+  walletAddress?: string;
+  onDeactivate?: (agentId: string) => Promise<void>;
 }
 
-export function AgentList({ knownAgents, onAddAgent }: Props) {
+export function AgentList({ knownAgents, onAddAgent, walletAddress, onDeactivate }: Props) {
   const [agents, setAgents] = useState<Record<string, AgentInfo | null>>({});
   const [loading, setLoading] = useState(false);
   const [lookupId, setLookupId] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
+  const [deactivating, setDeactivating] = useState<string | null>(null);
 
-  const refresh = () => setRefreshKey((k) => k + 1);
-
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
+  const fetchAgents = useCallback(async () => {
     if (knownAgents.length === 0) return;
-
-    let cancelled = false;
     setLoading(true);
-
-    Promise.all(
+    const results: Record<string, AgentInfo | null> = {};
+    await Promise.all(
       knownAgents.map(async (id) => {
         try {
-          const info = await queryAgent(id);
-          if (!cancelled) setAgents((prev) => ({ ...prev, [id]: info }));
+          results[id] = await queryAgent(id);
         } catch {
-          if (!cancelled) setAgents((prev) => ({ ...prev, [id]: null }));
+          results[id] = null;
         }
       }),
-    ).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
+    );
+    setAgents(results);
+    setLoading(false);
+  }, [knownAgents]);
 
-    return () => {
-      cancelled = true;
-    };
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [knownAgents, refreshKey]);
+  useEffect(() => {
+    fetchAgents();
+  }, [fetchAgents]);
 
   const handleAddLookup = () => {
     const trimmed = lookupId.trim();
@@ -57,6 +51,20 @@ export function AgentList({ knownAgents, onAddAgent }: Props) {
     if (!onAddAgent) return;
     onAddAgent(trimmed);
     setLookupId("");
+  };
+
+  const handleDeactivate = async (agentId: string) => {
+    if (!onDeactivate) return;
+    setDeactivating(agentId);
+    try {
+      await onDeactivate(agentId);
+      await new Promise((r) => setTimeout(r, 3000));
+      fetchAgents();
+    } catch {
+      // error handled upstream
+    } finally {
+      setDeactivating(null);
+    }
   };
 
   return (
@@ -99,7 +107,7 @@ export function AgentList({ knownAgents, onAddAgent }: Props) {
             {knownAgents.length} agent{knownAgents.length !== 1 ? "s" : ""}
           </span>
           <button
-            onClick={refresh}
+            onClick={fetchAgents}
             disabled={loading}
             className="text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50"
           >
@@ -111,6 +119,7 @@ export function AgentList({ knownAgents, onAddAgent }: Props) {
       {/* Agent cards */}
       {knownAgents.map((id) => {
         const agent = agents[id];
+        const isOwner = walletAddress && agent && agent.owner === walletAddress;
         return (
           <div
             key={id}
@@ -155,6 +164,17 @@ export function AgentList({ knownAgents, onAddAgent }: Props) {
                     <span className="font-mono">{agent.owner.slice(0, 8)}...{agent.owner.slice(-4)}</span>
                   </p>
                 </div>
+                {isOwner && agent.active && onDeactivate && (
+                  <div className="pt-2 border-t border-gray-800">
+                    <button
+                      onClick={() => handleDeactivate(id)}
+                      disabled={deactivating === id}
+                      className="rounded bg-red-900/30 border border-red-800 px-3 py-1 text-xs text-red-300 transition hover:bg-red-900/50 disabled:opacity-50"
+                    >
+                      {deactivating === id ? "Deactivating..." : "Deactivate"}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
