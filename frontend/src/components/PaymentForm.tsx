@@ -26,6 +26,7 @@ export function PaymentForm({ onCreatePayment, onExecutePayment, onRefundPayment
   const [toAgent, setToAgent] = useState("");
   const [amount, setAmount] = useState("");
   const [taskRef, setTaskRef] = useState("");
+  const [upiRef, setUpiRef] = useState("");
 
   // Execute / Refund state
   const [paymentId, setPaymentId] = useState("");
@@ -49,12 +50,14 @@ export function PaymentForm({ onCreatePayment, onExecutePayment, onRefundPayment
     clearResult();
 
     try {
-      const hash = await onCreatePayment(fromAgent, toAgent, amount, taskRef);
+      const finalTaskRef = upiRef ? `upi:${upiRef}|${taskRef || "payment"}` : taskRef;
+      const hash = await onCreatePayment(fromAgent, toAgent, amount, finalTaskRef);
       if (hash) setResultTx(hash);
       setFromAgent("");
       setToAgent("");
       setAmount("");
       setTaskRef("");
+      setUpiRef("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
     } finally {
@@ -187,6 +190,18 @@ export function PaymentForm({ onCreatePayment, onExecutePayment, onRefundPayment
               placeholder="task-001"
               className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">UPI Settlement Reference (optional)</label>
+            <input
+              value={upiRef}
+              onChange={(e) => setUpiRef(e.target.value)}
+              placeholder="user@upi"
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Stores a UPI identifier inside the on-chain task reference for off-chain settlement tracking.
+            </p>
           </div>
           <button
             type="submit"
