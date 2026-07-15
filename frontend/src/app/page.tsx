@@ -10,6 +10,7 @@ import { PaymentForm } from "@/components/PaymentForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WalletGuard } from "@/components/WalletGuard";
 import { SatisfactionWidget } from "@/components/SatisfactionWidget";
+import { AnalyticsPanel } from "@/components/AnalyticsPanel";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -196,6 +197,9 @@ export default function Home() {
 
         {tab === "payments" && (
           <ErrorBoundary>
+            <div className="mb-6">
+              <AnalyticsPanel />
+            </div>
             <div className="grid gap-6 lg:grid-cols-2">
               <section className="space-y-6">
                 <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
