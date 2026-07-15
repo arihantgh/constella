@@ -17,6 +17,7 @@
  *   --rpc        Soroban RPC URL (default: soroban-testnet.stellar.org)
  *   --interval   Payment interval in seconds (default: per profile)
  *   --profile    Behavior profile (conservative | aggressive | over-limit)
+ *   --token      Custom Stellar asset contract ID for payments (default: native XLM)
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -79,6 +80,7 @@ const RPC_URL = args.rpc || args.r || "https://soroban-testnet.stellar.org";
 const PROFILE_NAME = args.profile || args.p || "conservative";
 const PROFILE = PROFILES[PROFILE_NAME] || PROFILES.conservative;
 const INTERVAL = parseInt(args.interval || args.i || "0", 10) || PROFILE.interval;
+const TOKEN_ID = args.token || args.t || process.env.TOKEN_ID || "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4";
 const NETWORK = "Test SDF Network ; September 2015";
 
 if (!SECRET) {
@@ -121,6 +123,7 @@ console.log(`│ Bob:      ${bob.publicKey().slice(0, 16)}...${"      │"}`);
 console.log(`│ RPC:      ${RPC_URL}`);
 console.log(`│ Interval: ${INTERVAL}s${" ".repeat(28)}│`);
 console.log(`│ Amount:   ${PROFILE.perTxAmount.padEnd(24)}│`);
+console.log(`│ Token:    ${TOKEN_ID.slice(0, 24).padEnd(24)}│`);
 console.log(`│ Budget:   tx=${PROFILE.perTxLimit} daily=${PROFILE.dailyLimit}${" │"}`);
 console.log("└──────────────────────────────────────────────────────┘");
 console.log("");
@@ -259,7 +262,7 @@ async function run() {
         toAddress(alice.publicKey()),
         toAddress(bob.publicKey()),
         toI128(amount),
-        toAddress("CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"),
+        toAddress(TOKEN_ID),
         toBytes(`sim-payment-${paymentCount}`),
       ],
     );
