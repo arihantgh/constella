@@ -15,6 +15,7 @@ import { GettingStarted } from "@/components/GettingStarted";
 import { FeedbackPrompt } from "@/components/FeedbackPrompt";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { GuardrailsInfo } from "@/components/GuardrailsInfo";
+import { ContractArchitecture } from "@/components/ContractArchitecture";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -240,6 +241,10 @@ export default function Home() {
           </ErrorBoundary>
         )}
       </WalletGuard>
+
+      <footer className="mt-12">
+        <ContractArchitecture />
+      </footer>
     </main>
   );
 }
