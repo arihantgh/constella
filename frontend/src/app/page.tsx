@@ -12,6 +12,7 @@ import { WalletGuard } from "@/components/WalletGuard";
 import { SatisfactionWidget } from "@/components/SatisfactionWidget";
 import { AnalyticsPanel } from "@/components/AnalyticsPanel";
 import { GettingStarted } from "@/components/GettingStarted";
+import { FeedbackPrompt } from "@/components/FeedbackPrompt";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -158,6 +159,7 @@ export default function Home() {
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <SatisfactionWidget />
           <GettingStarted agentCount={knownAgents.length} />
+          <FeedbackPrompt />
         </div>
 
         {/* Tab bar */}
