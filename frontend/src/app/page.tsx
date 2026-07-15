@@ -16,6 +16,7 @@ import { FeedbackPrompt } from "@/components/FeedbackPrompt";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { GuardrailsInfo } from "@/components/GuardrailsInfo";
 import { ContractArchitecture } from "@/components/ContractArchitecture";
+import { ContractLinks } from "@/components/ContractLinks";
 import { ReconciliationExport } from "@/components/ReconciliationExport";
 import { TxDebugLog } from "@/components/TxDebugLog";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
@@ -258,8 +259,9 @@ export default function Home() {
         )}
       </WalletGuard>
 
-      <footer className="mt-12">
+      <footer className="mt-12 grid gap-4 lg:grid-cols-2">
         <ContractArchitecture />
+        <ContractLinks />
       </footer>
     </main>
   );
