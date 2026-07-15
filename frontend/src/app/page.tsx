@@ -19,6 +19,8 @@ import { ContractArchitecture } from "@/components/ContractArchitecture";
 import { ReconciliationExport } from "@/components/ReconciliationExport";
 import { TxDebugLog } from "@/components/TxDebugLog";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
+import { NetworkSelector } from "@/components/NetworkSelector";
+import { MainnetBanner } from "@/components/MainnetBanner";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -35,6 +37,7 @@ type Tab = "agents" | "budgets" | "payments";
 export default function Home() {
   const { address, isConnected, isLoading, error, connect, disconnect, signAndSend } = useWallet();
   const [tab, setTab] = useState<Tab>("agents");
+  const [previewNetwork, setPreviewNetwork] = useState("testnet");
   const [knownAgents, setKnownAgents] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -129,7 +132,8 @@ export default function Home() {
           <h1 className="text-2xl font-bold tracking-tight">constella</h1>
           <p className="text-sm text-gray-400">Autonomous Agent Payments on Stellar</p>
         </div>
-        <div>
+        <div className="flex items-center gap-3">
+          <NetworkSelector value={previewNetwork} onChange={setPreviewNetwork} />
           {isConnected && address ? (
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 rounded-full bg-green-900/50 px-3 py-1 text-sm text-green-300">
@@ -163,6 +167,11 @@ export default function Home() {
         onConnect={connect}
       >
         {isConnected && knownAgents.length < 2 && <OnboardingWizard />}
+        {previewNetwork === "mainnet" && (
+          <div className="mb-4">
+            <MainnetBanner />
+          </div>
+        )}
 
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <SatisfactionWidget />
