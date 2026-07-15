@@ -39,6 +39,8 @@ function eventColor(event: SorobanEvent): string {
 export function PaymentFeed() {
   const { events, connected, reconnect } = useEventFeed();
 
+  const lastEventAt = events.length > 0 ? events[0].timestamp : null;
+
   return (
     <div className="space-y-3">
       {/* Connection status */}
@@ -50,6 +52,11 @@ export function PaymentFeed() {
           <span className="text-xs text-gray-500">
             {connected ? "Connected" : "Disconnected"}
           </span>
+          {lastEventAt && (
+            <span className="text-xs text-gray-500">
+              · Last event {new Date(lastEventAt).toLocaleTimeString()}
+            </span>
+          )}
         </div>
         {!connected && (
           <button
