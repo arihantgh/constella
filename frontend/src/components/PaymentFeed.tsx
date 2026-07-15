@@ -1,10 +1,10 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { useEventFeed, type SorobanEvent } from "@/hooks/useEventFeed";
 
 function eventLabel(event: SorobanEvent): string {
   const topic = event.topic[1] || event.topic[0] || "";
-  // Try to extract payment ID from topic
   if (typeof topic === "string") return `#${topic.slice(0, 8)}`;
   if (typeof topic === "number") return `#${topic}`;
   return "";
@@ -38,8 +38,23 @@ function eventColor(event: SorobanEvent): string {
 
 export function PaymentFeed() {
   const { events, connected, reconnect } = useEventFeed();
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const lastEventAt = events.length > 0 ? events[0].timestamp : null;
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      const matchesType = filter === "all" || e.topic[0] === filter;
+      const term = search.toLowerCase();
+      const matchesSearch =
+        !term ||
+        e.tx_hash.toLowerCase().includes(term) ||
+        e.contract_id.toLowerCase().includes(term) ||
+        eventSummary(e).toLowerCase().includes(term);
+      return matchesType && matchesSearch;
+    });
+  }, [events, filter, search]);
 
   return (
     <div className="space-y-3">
@@ -68,14 +83,37 @@ export function PaymentFeed() {
         )}
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs text-gray-200 focus:border-blue-500 focus:outline-none"
+        >
+          <option value="all">All events</option>
+          <option value="pay_creat">Created</option>
+          <option value="pay_exec">Executed</option>
+          <option value="pay_rejct">Rejected</option>
+          <option value="pay_refnd">Refunded</option>
+          <option value="agent_reg">Agent Reg.</option>
+          <option value="policy_up">Budget Upd.</option>
+        </select>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search tx, contract, or event..."
+          className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-xs text-gray-200 placeholder-gray-500 focus:border-blue-500 focus:outline-none"
+        />
+      </div>
+
       {/* Event list */}
-      {events.length === 0 ? (
+      {filteredEvents.length === 0 ? (
         <div className="py-8 text-center text-sm text-gray-500">
           No events yet. Events will appear here as they happen on-chain.
         </div>
       ) : (
         <div className="max-h-[600px] space-y-2 overflow-y-auto">
-          {events.map((event, i) => (
+          {filteredEvents.map((event, i) => (
             <div
               key={`${event.tx_hash}-${i}`}
               className={`rounded-lg border-l-4 px-4 py-3 ${eventColor(event)}`}

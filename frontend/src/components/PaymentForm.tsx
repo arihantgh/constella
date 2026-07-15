@@ -4,6 +4,7 @@ import { useState } from "react";
 import { queryPayment } from "@/lib/soroban";
 import type { PaymentRecord } from "@/lib/types";
 import { PaymentStatus } from "@/lib/types";
+import { friendlyError } from "@/lib/error-helper";
 
 interface Props {
   onCreatePayment: (
@@ -59,7 +60,7 @@ export function PaymentForm({ onCreatePayment, onExecutePayment, onRefundPayment
       setTaskRef("");
       setUpiRef("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment failed");
+      setError(err instanceof Error ? friendlyError(err.message) : "Payment failed");
     } finally {
       setSubmitting(false);
     }
