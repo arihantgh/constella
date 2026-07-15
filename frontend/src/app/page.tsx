@@ -16,6 +16,7 @@ import { FeedbackPrompt } from "@/components/FeedbackPrompt";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { GuardrailsInfo } from "@/components/GuardrailsInfo";
 import { ContractArchitecture } from "@/components/ContractArchitecture";
+import { ReconciliationExport } from "@/components/ReconciliationExport";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import {
   buildRegisterAgentTx,
@@ -235,6 +236,7 @@ export default function Home() {
                   />
                 </div>
                 <GuardrailsInfo />
+                <ReconciliationExport />
               </section>
               <section className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
                 <h2 className="mb-4 text-lg font-semibold">Live Payment Feed</h2>
