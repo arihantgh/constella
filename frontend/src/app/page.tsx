@@ -9,6 +9,7 @@ import { PaymentFeed } from "@/components/PaymentFeed";
 import { PaymentForm } from "@/components/PaymentForm";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WalletGuard } from "@/components/WalletGuard";
+import { SatisfactionWidget } from "@/components/SatisfactionWidget";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -143,6 +144,10 @@ export default function Home() {
         error={error}
         onConnect={connect}
       >
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <SatisfactionWidget />
+        </div>
+
         {/* Tab bar */}
         <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg border border-gray-800 bg-gray-900/50 p-1">
           {tabs.map((t) => (
