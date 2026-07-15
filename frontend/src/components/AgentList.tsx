@@ -1,7 +1,7 @@
 "use client";
 
-import type { AgentInfo } from "@/lib/types";
-import { queryAgent } from "@/lib/soroban";
+import type { AgentInfo, Budget } from "@/lib/types";
+import { queryAgent, queryBudget } from "@/lib/soroban";
 import { useEffect, useState, useCallback } from "react";
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export function AgentList({ knownAgents, onAddAgent, walletAddress, onDeactivate }: Props) {
   const [agents, setAgents] = useState<Record<string, AgentInfo | null>>({});
+  const [budgets, setBudgets] = useState<Record<string, Budget | null>>({});
   const [loading, setLoading] = useState(false);
   const [lookupId, setLookupId] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
@@ -23,6 +24,7 @@ export function AgentList({ knownAgents, onAddAgent, walletAddress, onDeactivate
     if (knownAgents.length === 0) return;
     setLoading(true);
     const results: Record<string, AgentInfo | null> = {};
+    const budgetResults: Record<string, Budget | null> = {};
     await Promise.all(
       knownAgents.map(async (id) => {
         try {
@@ -30,9 +32,15 @@ export function AgentList({ knownAgents, onAddAgent, walletAddress, onDeactivate
         } catch {
           results[id] = null;
         }
+        try {
+          budgetResults[id] = await queryBudget(id);
+        } catch {
+          budgetResults[id] = null;
+        }
       }),
     );
     setAgents(results);
+    setBudgets(budgetResults);
     setLoading(false);
   }, [knownAgents]);
 
@@ -164,6 +172,27 @@ export function AgentList({ knownAgents, onAddAgent, walletAddress, onDeactivate
                     <span className="font-mono">{agent.owner.slice(0, 8)}...{agent.owner.slice(-4)}</span>
                   </p>
                 </div>
+                {budgets[id] && (
+                  <div className="mt-3">
+                    <div className="mb-1 flex justify-between text-xs text-gray-400">
+                      <span>Daily budget usage</span>
+                      <span>
+                        {budgets[id]?.spent_today} / {budgets[id]?.daily_limit} XLM
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-800">
+                      <div
+                        className="h-2 rounded-full bg-blue-500"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            (Number(budgets[id]?.spent_today || 0) / Number(budgets[id]?.daily_limit || 1)) * 100,
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
                 {isOwner && agent.active && onDeactivate && (
                   <div className="pt-2 border-t border-gray-800">
                     <button
