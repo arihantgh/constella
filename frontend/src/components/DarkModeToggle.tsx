@@ -2,28 +2,27 @@
 
 import { useEffect, useState } from "react";
 
+function getInitialDark() {
+  if (typeof window === "undefined") return true;
+  const stored = localStorage.getItem("constella-theme");
+  if (stored) return stored !== "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
 export function DarkModeToggle() {
-  const [dark, setDark] = useState(true);
+  const [dark, setDark] = useState(getInitialDark);
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("constella-theme") : null;
-    const prefersDark =
-      stored === null
-        ? typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches
-        : stored !== "light";
-    setDark(prefersDark);
-    document.documentElement.classList.toggle("dark", prefersDark);
-  }, []);
-
-  const toggle = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
+    document.documentElement.classList.toggle("dark", dark);
     try {
-      localStorage.setItem("constella-theme", next ? "dark" : "light");
+      localStorage.setItem("constella-theme", dark ? "dark" : "light");
     } catch {
       // ignore
     }
+  }, [dark]);
+
+  const toggle = () => {
+    setDark((prev) => !prev);
   };
 
   return (

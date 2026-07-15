@@ -45,6 +45,7 @@ export function AgentList({ knownAgents, onAddAgent, walletAddress, onDeactivate
   }, [knownAgents]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAgents();
   }, [fetchAgents]);
 

@@ -8,13 +8,10 @@ function statusColor(status: DebugEntry["status"]) {
 }
 
 export function TxDebugLog() {
-  const [logs, setLogs] = useState<DebugEntry[]>([]);
-
-  const refresh = () => setLogs(getDebugLog());
+  const [logs, setLogs] = useState<DebugEntry[]>(() => getDebugLog());
 
   useEffect(() => {
-    refresh();
-    const id = setInterval(refresh, 3000);
+    const id = setInterval(() => setLogs(getDebugLog()), 3000);
     return () => clearInterval(id);
   }, []);
 
@@ -24,7 +21,7 @@ export function TxDebugLog() {
         <h3 className="text-sm font-semibold text-gray-200">Transaction Debug Log</h3>
         {logs.length > 0 && (
           <button
-            onClick={() => { clearDebugLog(); refresh(); }}
+            onClick={() => { clearDebugLog(); setLogs(getDebugLog()); }}
             className="text-xs text-gray-500 hover:text-gray-300"
           >
             Clear
