@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { BrowserHint } from "@/components/BrowserHint";
 
 interface Props {
   isConnected: boolean;
@@ -31,15 +32,17 @@ export function WalletGuard({
   }
 
   if (error) {
+    const isMissingFreighter = error.toLowerCase().includes("freighter not detected");
     return (
       <div className="rounded-lg border border-red-800 bg-red-900/20 p-6 text-center">
         <p className="text-sm text-red-300">{error}</p>
         <button
           onClick={onConnect}
-          className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+          className="mt-3 min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
         >
           Retry
         </button>
+        {isMissingFreighter && <BrowserHint />}
       </div>
     );
   }
