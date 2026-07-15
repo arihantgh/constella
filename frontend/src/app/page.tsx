@@ -23,6 +23,7 @@ import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { NetworkSelector } from "@/components/NetworkSelector";
 import { MainnetBanner } from "@/components/MainnetBanner";
 import { AgentMetrics } from "@/components/AgentMetrics";
+import { DarkModeToggle } from "@/components/DarkModeToggle";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -135,6 +136,7 @@ export default function Home() {
           <p className="text-sm text-gray-400">Autonomous Agent Payments on Stellar</p>
         </div>
         <div className="flex items-center gap-3">
+          <DarkModeToggle />
           <NetworkSelector value={previewNetwork} onChange={setPreviewNetwork} />
           {isConnected && address ? (
             <div className="flex items-center gap-3">
