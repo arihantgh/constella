@@ -16,6 +16,7 @@ import { FeedbackPrompt } from "@/components/FeedbackPrompt";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { GuardrailsInfo } from "@/components/GuardrailsInfo";
 import { ContractArchitecture } from "@/components/ContractArchitecture";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -159,6 +160,8 @@ export default function Home() {
         error={error}
         onConnect={connect}
       >
+        {isConnected && knownAgents.length < 2 && <OnboardingWizard />}
+
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <SatisfactionWidget />
           <GettingStarted agentCount={knownAgents.length} />
