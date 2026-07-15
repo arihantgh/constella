@@ -22,6 +22,7 @@ import { TxDebugLog } from "@/components/TxDebugLog";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 import { NetworkSelector } from "@/components/NetworkSelector";
 import { MainnetBanner } from "@/components/MainnetBanner";
+import { AgentMetrics } from "@/components/AgentMetrics";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -178,6 +179,7 @@ export default function Home() {
           <SatisfactionWidget />
           <GettingStarted agentCount={knownAgents.length} />
           <FeedbackPrompt />
+          <AgentMetrics knownAgents={knownAgents} />
         </div>
 
         {/* Tab bar */}

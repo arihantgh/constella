@@ -199,6 +199,21 @@ export function useWallet() {
     [state.address],
   );
 
+  // Re-check connection on mount and when the tab becomes active
+  useEffect(() => {
+    async function handleVisibilityChange() {
+      if (document.visibilityState === "visible" && !state.isConnected) {
+        try {
+          await connect();
+        } catch {
+          // ignore reconnection errors
+        }
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [connect, state.isConnected]);
+
   // Re-check connection on mount
   useEffect(() => {
     async function check() {
