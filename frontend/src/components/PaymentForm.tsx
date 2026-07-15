@@ -5,6 +5,7 @@ import { queryPayment } from "@/lib/soroban";
 import type { PaymentRecord } from "@/lib/types";
 import { PaymentStatus } from "@/lib/types";
 import { friendlyError } from "@/lib/error-helper";
+import { addDebugEntry } from "@/lib/tx-debug-log";
 
 interface Props {
   onCreatePayment: (
@@ -53,14 +54,19 @@ export function PaymentForm({ onCreatePayment, onExecutePayment, onRefundPayment
     try {
       const finalTaskRef = upiRef ? `upi:${upiRef}|${taskRef || "payment"}` : taskRef;
       const hash = await onCreatePayment(fromAgent, toAgent, amount, finalTaskRef);
-      if (hash) setResultTx(hash);
+      if (hash) {
+        setResultTx(hash);
+        addDebugEntry({ action: "Create Payment", message: `Success: ${hash}`, status: "success" });
+      }
       setFromAgent("");
       setToAgent("");
       setAmount("");
       setTaskRef("");
       setUpiRef("");
     } catch (err) {
-      setError(err instanceof Error ? friendlyError(err.message) : "Payment failed");
+      const msg = err instanceof Error ? err.message : "Payment failed";
+      setError(friendlyError(msg));
+      addDebugEntry({ action: "Create Payment", message: msg, status: "error" });
     } finally {
       setSubmitting(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { addDebugEntry } from "@/lib/tx-debug-log";
 
 interface Props {
   onSetBudget: (agentId: string, perTxLimit: string, dailyLimit: string) => Promise<void>;
@@ -34,7 +35,9 @@ export function BudgetForm({ onSetBudget, onSetTaskBudget }: Props) {
       setDailyLimit("");
       setTaskBudgetLimit("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to set budget");
+      const msg = err instanceof Error ? err.message : "Failed to set budget";
+      setError(msg);
+      addDebugEntry({ action: "Set Budget", message: msg, status: "error" });
     } finally {
       setSubmitting(false);
     }

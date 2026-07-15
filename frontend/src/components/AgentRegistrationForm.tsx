@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { addDebugEntry } from "@/lib/tx-debug-log";
 
 interface Props {
   onRegister: (agentId: string, owner: string, metadata: string) => Promise<void>;
@@ -30,7 +31,9 @@ export function AgentRegistrationForm({ onRegister, defaultOwner }: Props) {
       setOwner("");
       setMetadata("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      const msg = err instanceof Error ? err.message : "Registration failed";
+      setError(msg);
+      addDebugEntry({ action: "Register Agent", message: msg, status: "error" });
     } finally {
       setSubmitting(false);
     }
