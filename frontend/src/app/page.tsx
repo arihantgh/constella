@@ -13,6 +13,7 @@ import { SatisfactionWidget } from "@/components/SatisfactionWidget";
 import { AnalyticsPanel } from "@/components/AnalyticsPanel";
 import { GettingStarted } from "@/components/GettingStarted";
 import { FeedbackPrompt } from "@/components/FeedbackPrompt";
+import { VerificationBadge } from "@/components/VerificationBadge";
 import {
   buildRegisterAgentTx,
   buildDeactivateAgentTx,
@@ -201,9 +202,14 @@ export default function Home() {
 
         {tab === "budgets" && (
           <ErrorBoundary>
-            <section className="mx-auto max-w-lg rounded-xl border border-gray-800 bg-gray-900/50 p-6">
-              <h2 className="mb-4 text-lg font-semibold">Set Budget</h2>
-              <BudgetForm onSetBudget={handleSetBudget} onSetTaskBudget={handleSetTaskBudget} />
+            <section className="mx-auto max-w-lg space-y-4">
+              <div className="flex justify-center">
+                <VerificationBadge />
+              </div>
+              <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-6">
+                <h2 className="mb-4 text-lg font-semibold">Set Budget</h2>
+                <BudgetForm onSetBudget={handleSetBudget} onSetTaskBudget={handleSetTaskBudget} />
+              </div>
             </section>
           </ErrorBoundary>
         )}
