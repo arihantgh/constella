@@ -69,6 +69,15 @@ export default function Home() {
     await signAndSend(xdr);
   };
 
+  const handleSetTaskBudget = (agentId: string, limit: string) => {
+    try {
+      const key = `taskBudget:${agentId}`;
+      localStorage.setItem(key, limit);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const handleCreatePayment = async (
     fromAgent: string,
     toAgent: string,
@@ -190,7 +199,7 @@ export default function Home() {
           <ErrorBoundary>
             <section className="mx-auto max-w-lg rounded-xl border border-gray-800 bg-gray-900/50 p-6">
               <h2 className="mb-4 text-lg font-semibold">Set Budget</h2>
-              <BudgetForm onSetBudget={handleSetBudget} />
+              <BudgetForm onSetBudget={handleSetBudget} onSetTaskBudget={handleSetTaskBudget} />
             </section>
           </ErrorBoundary>
         )}
