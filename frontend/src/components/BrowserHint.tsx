@@ -18,6 +18,11 @@ export function BrowserHint() {
       <p className="mt-1 text-blue-300/80">
         Install the Freighter extension for {browser}, then refresh the page.
       </p>
+      {browser === "Firefox" && (
+        <p className="mt-1 text-blue-300/80">
+          Firefox connectivity can be intermittent — Chrome or Edge may be more reliable.
+        </p>
+      )}
       <a
         href="https://www.freighter.app/"
         target="_blank"
