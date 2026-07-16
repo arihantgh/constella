@@ -25,9 +25,17 @@ jobs:
       - name: Install Soroban CLI
         run: cargo install soroban-cli --features opt
 
-      - name: Build contracts
+      - name: Build agent-registry WASM
         working-directory: contracts
-        run: cargo build --release --target wasm32v1-none
+        run: cargo build --release --target wasm32v1-none -p agent-registry
+
+      - name: Build budget-policy WASM
+        working-directory: contracts
+        run: cargo build --release --target wasm32v1-none -p budget-policy
+
+      - name: Build payment WASM
+        working-directory: contracts
+        run: cargo build --release --target wasm32v1-none -p payment
 
       - name: Deploy contracts
         env:
