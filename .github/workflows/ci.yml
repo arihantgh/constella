@@ -28,13 +28,9 @@ jobs:
         with:
           workspaces: contracts
 
-      - name: Build WASM artifacts (registry + budget first)
+      - name: Build WASM artifacts
         working-directory: contracts
-        run: cargo build --release --target wasm32v1-none -p agent-registry -p budget-policy
-
-      - name: Build payment (depends on registry + budget WASM)
-        working-directory: contracts
-        run: cargo build --release --target wasm32v1-none -p payment
+        run: cargo build --release --target wasm32v1-none
 
       - name: Run all contract tests
         working-directory: contracts
