@@ -30,6 +30,7 @@ export function DarkModeToggle() {
       onClick={toggle}
       aria-label="Toggle dark mode"
       className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-gray-200 transition hover:bg-gray-700"
+      suppressHydrationWarning
     >
       {dark ? "🌙" : "☀️"}
     </button>
